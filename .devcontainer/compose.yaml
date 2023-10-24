@@ -1,0 +1,22 @@
+version: "3"
+services:
+  discord-bot:
+    build: ./discord-bot
+    volumes:
+      - ./discord-bot:/discord-bot
+    init: true
+    tty: true
+
+  classroom:
+    build: ./classroom
+    volumes:
+      - ./classroom:/classroom
+    init: true
+    tty: true
+
+  reminder:
+    build: ./reminder
+    volumes:
+      - ./reminder:/reminder
+    init: true
+    tty: true

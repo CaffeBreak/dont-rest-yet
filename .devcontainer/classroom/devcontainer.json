@@ -1,0 +1,7 @@
+{
+  "name": "Classroom",
+  "dockerComposeFile": ["../compose.yaml"],
+  "service": "classroom",
+  "workspaceFolder": "/${localWorkspaceFolderBasename}",
+  "postAttachCommand": "poetry install"
+}

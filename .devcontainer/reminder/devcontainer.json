@@ -1,0 +1,6 @@
+{
+  "name": "Reminder",
+  "dockerComposeFile": ["../compose.yaml"],
+  "service": "reminder",
+  "workspaceFolder": "/${localWorkspaceFolderBasename}"
+}
