@@ -1,7 +1,9 @@
 {
   "name": "Discord Bot",
-  "dockerComposeFile": ["../compose.yaml"],
+  "dockerComposeFile": [
+    "../compose.yaml"
+  ],
   "service": "discord-bot",
-  "workspaceFolder": "/${localWorkspaceFolderBasename}",
+  "workspaceFolder": "/discord-bot",
   "postAttachCommand": "poetry install"
 }

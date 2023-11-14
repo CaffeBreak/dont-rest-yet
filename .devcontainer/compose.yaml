@@ -1,22 +1,28 @@
 version: "3"
 services:
   discord-bot:
-    build: ./discord-bot
+    build: 
+      context: ..
+      dockerfile: .devcontainer/discord-bot/Dockerfile
     volumes:
-      - ./discord-bot:/discord-bot
+      - ..:/discord-bot
     init: true
     tty: true
 
   classroom:
-    build: ./classroom
+    build: 
+      context: ..
+      dockerfile: .devcontainer/classroom/Dockerfile
     volumes:
-      - ./classroom:/classroom
+      - ..:/classroom
     init: true
     tty: true
 
   reminder:
-    build: ./reminder
+    build: 
+      context: ..
+      dockerfile: .devcontainer/reminder/Dockerfile
     volumes:
-      - ./reminder:/reminder
+      - ..:/reminder
     init: true
     tty: true

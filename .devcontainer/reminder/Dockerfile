@@ -15,6 +15,7 @@ RUN apt-get update && \
   apt-get install -y --no-install-recommends sudo && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
+  rustup component add rustfmt && \
   groupadd --gid $GID $USERNAME && \
   useradd --uid $UID --gid $GID -m -s /bin/bash $USERNAME && \
   echo "${USERNAME}   ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers

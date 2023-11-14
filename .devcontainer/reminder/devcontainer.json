@@ -1,6 +1,17 @@
 {
-  "name": "Reminder",
-  "dockerComposeFile": ["../compose.yaml"],
-  "service": "reminder",
-  "workspaceFolder": "/${localWorkspaceFolderBasename}"
+	"name": "Reminder",
+	"dockerComposeFile": [
+		"../compose.yaml"
+	],
+	"service": "reminder",
+	"workspaceFolder": "/reminder",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"Swellaby.rust-pack",
+				"yzhang.markdown-all-in-one"
+			]
+		}
+	}
 }
