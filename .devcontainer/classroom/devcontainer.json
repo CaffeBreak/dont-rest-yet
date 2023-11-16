@@ -5,5 +5,15 @@
   ],
   "service": "classroom",
   "workspaceFolder": "/classroom",
-  "postAttachCommand": "poetry install"
+  "postAttachCommand": "poetry install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "yzhang.markdown-all-in-one",
+        "EditorConfig.EditorConfig",
+        "tamasfe.even-better-toml"
+      ]
+    }
+  }
 }

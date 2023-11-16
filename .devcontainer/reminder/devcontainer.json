@@ -1,17 +1,17 @@
 {
-	"name": "Reminder",
-	"dockerComposeFile": [
-		"../compose.yaml"
-	],
-	"service": "reminder",
-	"workspaceFolder": "/reminder",
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"ms-azuretools.vscode-docker",
-				"Swellaby.rust-pack",
-				"yzhang.markdown-all-in-one"
-			]
-		}
-	}
+  "name": "Reminder",
+  "dockerComposeFile": [
+    "../compose.yaml"
+  ],
+  "service": "reminder",
+  "workspaceFolder": "/reminder",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "yzhang.markdown-all-in-one",
+        "EditorConfig.EditorConfig"
+      ]
+    }
+  }
 }
