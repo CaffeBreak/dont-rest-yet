@@ -12,7 +12,7 @@ WORKDIR /reminder
 COPY --from=git /usr/bin/git /usr/bin
 
 RUN apt-get update && \
-  apt-get install -y --no-install-recommends sudo && \
+  apt-get install -y --no-install-recommends sudo protobuf-compiler libprotobuf-dev && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   rustup component add rustfmt && \
