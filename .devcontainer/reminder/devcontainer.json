@@ -4,7 +4,7 @@
     "../compose.yaml"
   ],
   "service": "reminder",
-  "workspaceFolder": "/reminder",
+  "workspaceFolder": "/dry",
   "customizations": {
     "vscode": {
       "extensions": [
