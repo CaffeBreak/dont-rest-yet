@@ -8,7 +8,7 @@ from pb import discorbot_pb2
 from datetime import datetime, timezone
 from google.protobuf.timestamp_pb2 import Timestamp
 
-dotenv_path = '/discord-bot/DiscordBot/.env'
+dotenv_path = '../.env'
 load_dotenv(verbose=True, dotenv_path=dotenv_path)
 
 intents = discord.Intents.default()
@@ -60,16 +60,17 @@ async def remind(interaction: discord.interactions, main: str, days: str, time: 
     result = convert_to_timestamp(year, month, day, hour, minute, 0)
     
     print(type(result))
+    print(type(Uid))
     
     request = discorbot_pb2.CreateTaskRequest(
       title=main,
-      remindAt=result.seconds,
-      who=Uid
+      remindAt=result,
+      who=str(Uid)
     )
-    with grpc.insecure_channel('localhost:5001') as channel:
+    with grpc.insecure_channel('reminder:58946') as channel:
         stub = discorbot_pb2_grpc.TaskServiceStub(channel)
         response = stub.CreateTask(request)
-    print("Response: %s" % response.message)
+    print(response)
 
       
     await interaction.response.send_message(f"Hi, {main} {day} {time} ")
