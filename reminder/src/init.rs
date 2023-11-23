@@ -33,7 +33,7 @@ pub(crate) static TASK_SERVICE: Lazy<TaskService<TaskRepositorySurrealDriver>> =
     });
 
 pub(crate) async fn init_db() -> Result<()> {
-    log!("INFO" | "Connect to {} ...", CONFIG.db_uri);
+    log!("DB" -> format!("Connect to {} ...", CONFIG.db_uri).magenta());
 
     DB.connect(CONFIG.db_uri.to_string()).await?;
     DB.signin(Root {
@@ -43,7 +43,7 @@ pub(crate) async fn init_db() -> Result<()> {
     .await?;
     DB.use_ns("dry").use_db("reminder").await?;
 
-    log!("INFO" -> "Connected.");
+    log!("DB" -> format!("Database connected").magenta());
 
     Ok(())
 }

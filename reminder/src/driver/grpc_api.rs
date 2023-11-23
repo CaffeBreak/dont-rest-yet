@@ -33,7 +33,7 @@ impl TaskService for TaskSrv {
         request: Request<CreateTaskRequest>,
     ) -> Result<Response<Task>, Status> {
         let create_task_request = request.into_inner();
-        log!("gRPC" | "Create task request received.");
+        log!("gRPC" -> format!("<<< Create task request received.").cyan());
 
         let remind_at = create_task_request.remind_at.unwrap();
         let remind_at_seconds = remind_at.seconds * 1_000_000_000;
@@ -49,6 +49,8 @@ impl TaskService for TaskSrv {
             .await
             .unwrap();
 
+        log!("gRPC" -> format!(">>> Task created.").cyan());
+        log!("DEBUG" -> format!("Created: {:?}", created).dimmed());
         Ok(Response::new(created.into()))
     }
     async fn list_task(
@@ -56,7 +58,7 @@ impl TaskService for TaskSrv {
         request: Request<ListTaskRequest>,
     ) -> Result<Response<Tasks>, Status> {
         let list_task_request = request.into_inner();
-        log!("gRPC" | "List task request received.");
+        log!("gRPC" -> format!("<<< List task request received.").cyan());
 
         let list = TASK_SERVICE
             .list_task(match list_task_request.who {
@@ -66,6 +68,8 @@ impl TaskService for TaskSrv {
             .await
             .unwrap();
 
+        log!("gRPC" -> format!(">>> Task listed.").cyan());
+        log!("DEBUG" -> format!("Listed: {:?}", list).dimmed());
         Ok(Response::new(Tasks {
             tasks: list
                 .iter()
@@ -78,13 +82,15 @@ impl TaskService for TaskSrv {
         request: Request<DeleteTaskRequest>,
     ) -> Result<Response<()>, Status> {
         let delete_task_request = request.into_inner();
-        log!("gRPC" | "Delete task request received.");
+        log!("gRPC" -> format!("<<< Delete task request received.").cyan());
 
-        let _ = TASK_SERVICE
+        let deleted = TASK_SERVICE
             .delete_task(Id::from_str(delete_task_request.id))
             .await
             .unwrap();
 
+        log!("gRPC" -> format!(">>> Task deleted.").cyan());
+        log!("DEBUG" -> format!("Deleted: {:?}", deleted).dimmed());
         Ok(Response::new(()))
     }
 }
@@ -96,7 +102,7 @@ pub async fn serve() -> anyhow::Result<()> {
         .build()
         .unwrap();
 
-    log!("SERVER" -> format!("Start listening at {}", addr.to_string()).cyan());
+    log!("gRPC" -> format!("Start listening at {}", addr.to_string()).cyan());
     Server::builder()
         .add_service(reflection_service)
         .add_service(TaskServiceServer::new(TaskSrv))

@@ -5,7 +5,6 @@ pub(crate) struct Config {
     pub(crate) db_user: String,
     pub(crate) db_pass: String,
 }
-
 impl Default for Config {
     fn default() -> Self {
         Self {
