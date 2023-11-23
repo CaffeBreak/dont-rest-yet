@@ -4,7 +4,11 @@ use chrono::{TimeZone, Utc};
 use tonic::{transport::Server, Request, Response, Status};
 
 use crate::{
-    domain::user::User, driver::grpc_api::reminder::FILE_DESCRIPTOR_SET, init::TASK_SERVICE, log,
+    domain::{self, user::User},
+    driver::grpc_api::reminder::FILE_DESCRIPTOR_SET,
+    init::TASK_SERVICE,
+    log,
+    misc::id::Id,
 };
 
 use self::reminder::{
@@ -29,7 +33,7 @@ impl TaskService for TaskSrv {
         request: Request<CreateTaskRequest>,
     ) -> Result<Response<Task>, Status> {
         let create_task_request = request.into_inner();
-        log!("INFO" | "Create task request received.");
+        log!("gRPC" | "Create task request received.");
 
         let remind_at = create_task_request.remind_at.unwrap();
         let remind_at_seconds = remind_at.seconds * 1_000_000_000;
@@ -49,14 +53,38 @@ impl TaskService for TaskSrv {
     }
     async fn list_task(
         &self,
-        _request: Request<ListTaskRequest>,
+        request: Request<ListTaskRequest>,
     ) -> Result<Response<Tasks>, Status> {
-        Ok(Response::new(Tasks { tasks: vec![] }))
+        let list_task_request = request.into_inner();
+        log!("gRPC" | "List task request received.");
+
+        let list = TASK_SERVICE
+            .list_task(match list_task_request.who {
+                Some(who) => Some(User { id: who }),
+                None => None,
+            })
+            .await
+            .unwrap();
+
+        Ok(Response::new(Tasks {
+            tasks: list
+                .iter()
+                .map(|task| domain::task::Task::into(task.clone()))
+                .collect(),
+        }))
     }
     async fn delete_task(
         &self,
-        _request: Request<DeleteTaskRequest>,
+        request: Request<DeleteTaskRequest>,
     ) -> Result<Response<()>, Status> {
+        let delete_task_request = request.into_inner();
+        log!("gRPC" | "Delete task request received.");
+
+        let _ = TASK_SERVICE
+            .delete_task(Id::from_str(delete_task_request.id))
+            .await
+            .unwrap();
+
         Ok(Response::new(()))
     }
 }

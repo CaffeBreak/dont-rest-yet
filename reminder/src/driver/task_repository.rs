@@ -14,7 +14,7 @@ use crate::{
     misc::id::Id,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct TaskRecord {
     id: Thing,
     title: String,
@@ -73,10 +73,26 @@ impl TaskRepository for TaskRepositorySurrealDriver {
     }
 
     async fn list(&self, who: Option<User>) -> Result<Vec<domain::task::Task>> {
-        todo!()
+        let list = DB.query("select * from task");
+        let list: Vec<TaskRecord> = match who {
+            Some(who) => list
+                .query("where who = $who")
+                .bind(("who", who.id))
+                .await?
+                .take(1)
+                .unwrap(),
+            None => list.await?.take(0).unwrap(),
+        };
+
+        Ok(list
+            .iter()
+            .map(|task| TaskRecord::into(task.clone()))
+            .collect())
     }
 
-    async fn delete(&self, id: Id) -> Result<()> {
-        todo!()
+    async fn delete(&self, id: Id) -> Result<domain::task::Task> {
+        let deleted: TaskRecord = DB.delete(("task", id.to_string())).await?.unwrap();
+
+        Ok(deleted.into())
     }
 }

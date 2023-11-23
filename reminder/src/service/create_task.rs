@@ -26,7 +26,7 @@ impl<T: TaskRepository> TaskService<T> {
             .await?;
 
         let message = format!("以下のタスクを追加しました:\nid: {}\nタスクの内容: {}\nリマインド時間: {}\nリマインド対象の識別子: {}", created.id.to_string(), created.title, created.remind_at.with_timezone(&Asia::Tokyo).format("%Y/%M/%d %T"), created.who.id);
-        log!("INFO" | "{}", message);
+        log!("INFO" -> message);
 
         Ok(created)
     }

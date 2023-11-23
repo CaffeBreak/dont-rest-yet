@@ -6,7 +6,7 @@ use crate::{driver::grpc_api, misc::id::Id};
 
 use super::user::User;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Task {
     pub id: Id,
     pub title: String,
@@ -57,5 +57,5 @@ pub trait TaskRepository {
         &self,
         who: Option<User>,
     ) -> impl std::future::Future<Output = Result<Vec<Task>>> + Send;
-    fn delete(&self, id: Id) -> impl std::future::Future<Output = Result<()>> + Send;
+    fn delete(&self, id: Id) -> impl std::future::Future<Output = Result<Task>> + Send;
 }

@@ -12,7 +12,7 @@ const TIME_2000: Lazy<DateTime<Utc>> = Lazy::new(|| {
 });
 static RANDOM_COUNTER_SEED: Lazy<Mutex<u16>> = Lazy::new(|| Mutex::new(rand::thread_rng().gen()));
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Id(Box<[u8; 10]>);
 
 impl Id {
