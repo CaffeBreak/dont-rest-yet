@@ -5,14 +5,17 @@
   ],
   "service": "discord-bot",
   "workspaceFolder": "/dry",
-  "postAttachCommand": "cd DiscordBot && sudo poetry install --no-root",
+  "postAttachCommand": "cd DiscordBot && poetry install && echo \"source $(cd /dry/DiscordBot && poetry env info -p)/bin/activate\" >> ~/.bashrc",
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-azuretools.vscode-docker",
         "yzhang.markdown-all-in-one",
         "EditorConfig.EditorConfig",
-        "tamasfe.even-better-toml"
+        "tamasfe.even-better-toml",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "ms-python.python",
+        "ms-python.mypy-type-checker"
       ]
     }
   }

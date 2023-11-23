@@ -7,8 +7,6 @@ ARG UID=1000
 ARG GID=1000
 ARG USERNAME=developer
 
-ENV POETRY_HOME=/opt/poetry
-
 WORKDIR /discord-bot
 
 COPY --from=git /usr/bin/git /usr/bin
@@ -20,9 +18,8 @@ RUN apt-get update && \
   groupadd --gid $GID $USERNAME && \
   useradd --uid $UID --gid $GID -m -s /bin/bash $USERNAME && \
   echo "${USERNAME}   ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
-  wget -O - https://install.python-poetry.org | python3 - && \
-  cd /usr/local/bin && \
-  ln -s /opt/poetry/bin/poetry && \
-  poetry config virtualenvs.create false
+  su ${USERNAME} -c "curl -sSfL https://install.python-poetry.org | python" - && \
+  su ${USERNAME} -c 'echo export PATH="/home/${USERNAME}/.local/bin:$PATH" >> ~/.bashrc' && \
+  su ${USERNAME} -c 'PATH="/home/${USERNAME}/.local/bin:$PATH" poetry config virtualenvs.in-project true'
 
 USER ${USERNAME}
