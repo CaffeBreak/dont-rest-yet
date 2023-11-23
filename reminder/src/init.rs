@@ -15,6 +15,12 @@ pub(crate) static CONFIG: Lazy<Config> = Lazy::new(|| {
     let default = Config::default();
 
     Config {
+        grpc_port: match env::var("GRPC_PORT") {
+            Ok(port_str) => port_str
+                .parse()
+                .expect(format!("{} is invalid port number", port_str).as_str()),
+            Err(_) => default.grpc_port,
+        },
         db_uri: env::var("DB_URI").unwrap_or(default.db_uri),
         db_user: env::var("DB_USER").unwrap_or(default.db_user),
         db_pass: env::var("DB_PASS").unwrap_or(default.db_pass),

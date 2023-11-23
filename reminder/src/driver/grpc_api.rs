@@ -6,7 +6,7 @@ use tonic::{transport::Server, Request, Response, Status};
 use crate::{
     domain::{self, user::User},
     driver::grpc_api::reminder::FILE_DESCRIPTOR_SET,
-    init::TASK_SERVICE,
+    init::{CONFIG, TASK_SERVICE},
     log,
     misc::id::Id,
 };
@@ -90,7 +90,7 @@ impl TaskService for TaskSrv {
 }
 
 pub async fn serve() -> anyhow::Result<()> {
-    let addr: SocketAddr = "0.0.0.0:58946".parse().unwrap();
+    let addr: SocketAddr = format!("0.0.0.0:{}", CONFIG.grpc_port).parse().unwrap();
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
         .build()

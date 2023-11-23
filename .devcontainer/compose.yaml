@@ -24,6 +24,10 @@ services:
       dockerfile: .devcontainer/reminder/Dockerfile
     volumes:
       - ..:/dry
+    env_file:
+      - ../reminder/.env
+    ports:
+      - ${GRPC_PORT:-58946}:${GRPC_PORT:-58946}
     init: true
     tty: true
 
