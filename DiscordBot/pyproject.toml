@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "discordbot"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+discord = "^2.3.2"
+discord-py = {git = "https://github.com/Rapptz/discord.py"}
+python-dotenv = "^1.0.0"
+grpcio = "^1.59.3"
+grpcio-tools = "^1.59.3"
+py-cord = "^2.4.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

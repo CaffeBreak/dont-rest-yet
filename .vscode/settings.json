@@ -1,0 +1,7 @@
+{
+    "python.analysis.extraPaths": [
+        "./DiscordBot/src/proto",
+        "./DiscordBot/src/pb",
+        "./DiscordBot/src"
+    ]
+}

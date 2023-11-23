@@ -1,0 +1,3 @@
+[submodule "DiscordBot/src/proto/vendor/protobuf"]
+	path = DiscordBot/src/proto/vendor/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git

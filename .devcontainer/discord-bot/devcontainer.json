@@ -5,7 +5,7 @@
   ],
   "service": "discord-bot",
   "workspaceFolder": "/discord-bot",
-  "postAttachCommand": "poetry install",
+  "postAttachCommand": "cd DiscordBot && poetry install",
   "customizations": {
     "vscode": {
       "extensions": [
