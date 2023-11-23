@@ -1,8 +1,12 @@
+from ast import Module
+from distutils.cmd import Command
 import os
+from re import I
 import grpc
 import discord
-from discord import app_commands
+from discord import Interaction, app_commands
 from dotenv import load_dotenv
+
 from pb import discorbot_pb2_grpc
 from pb import discorbot_pb2
 from datetime import datetime, timezone
@@ -40,17 +44,17 @@ async def setup_hook() -> None:
   await tree.sync()
 
     
-@tree.command(name="remind", description="リマインドを行います")
-async def remind(interaction: discord.interactions, main: str, days: str, time: str):
+@tree.command(name="remind_add", description="リマインドを行います")
+async def remind(interaction: Interaction, main: str, days: str, time: str):
     """
     main : str
         リマインドしたい内容 
         
     days : str
-        リマインドしたい日付
+        リマインドしたい日付(10/31)
     
     time : str
-        リマインドする時間
+        リマインドする時間(18:00)
     """
     month, day = map(int, days.split('/'))
     hour, minute = map(int, time.split(':'))
@@ -74,5 +78,22 @@ async def remind(interaction: discord.interactions, main: str, days: str, time: 
 
       
     await interaction.response.send_message(f"Hi, {main} {day} {time} ")
+    
+@tree.command(name="remind_list", description="リマインドのリストを表示します")
+async def remind_list(interaction: Interaction):
+    Uid = interaction.user.id
+    request = discorbot_pb2.DeleteTaskRequest(
+      id= str(Uid)
+    )
+    with grpc.insecure_channel('reminder:58946') as channel:
+        stub = discorbot_pb2_grpc.TaskServiceStub(channel)
+        response = stub.CreateTask(request)
+  
+    await interaction.response.send_message(f"Hi,")
+  
 
-client.run(os.getenv("TOKEN"))
+@tree.command(name="remind_delete", description="リマインドの削除を行います")
+async def remind_delete(interaction: Interaction, ID: str):
+  await interaction.response.send_message(f"Hi, {ID} ")
+
+client.run(token= os.getenv("TOKEN"))
