@@ -355,6 +355,20 @@ files = [
 ]
 
 [[package]]
+name = "grpc-stubs"
+version = "1.53.0.3"
+description = "Mypy stubs for gRPC"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "grpc-stubs-1.53.0.3.tar.gz", hash = "sha256:6e5d75cdc88c0ba918e2f8395851f1e6a7c19a7c7fc3e902bde4601c7a1cbf96"},
+    {file = "grpc_stubs-1.53.0.3-py3-none-any.whl", hash = "sha256:312c3c697089344936c9779118a105bcc4ccc8eef053265f3f23086acdba2683"},
+]
+
+[package.dependencies]
+grpcio = "*"
+
+[[package]]
 name = "grpcio"
 version = "1.59.3"
 description = "HTTP/2-based RPC framework"
@@ -709,6 +723,17 @@ testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[l
 testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "packaging (>=23.1)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
 [[package]]
+name = "types-protobuf"
+version = "4.24.0.4"
+description = "Typing stubs for protobuf"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "types-protobuf-4.24.0.4.tar.gz", hash = "sha256:57ab42cb171dfdba2c74bb5b50c250478538cc3c5ed95b8b368929ad0c9f90a5"},
+    {file = "types_protobuf-4.24.0.4-py3-none-any.whl", hash = "sha256:131ab7d0cbc9e444bc89c994141327dcce7bcaeded72b1acb72a94827eb9c7af"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.8.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -825,4 +850,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e0c7e54df96d5178f3eff8989f2b30fce23936145f23b89ae013451186849530"
+content-hash = "641d62f5e65d808ebbc34d13add9d1da96ca7995db770e245e02fd4758d60309"
