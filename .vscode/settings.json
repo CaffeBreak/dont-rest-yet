@@ -4,6 +4,6 @@
     "./DiscordBot/src/pb",
     "./DiscordBot/src"
   ],
-  "python.analysis.typeCheckingMode": "strict",
+  "python.analysis.typeCheckingMode": "basic",
   "python.analysis.autoImportCompletions": true
 }
