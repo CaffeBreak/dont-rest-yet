@@ -1,18 +1,23 @@
 {
-  "name": "Reminder",
+  "name": "Discord Bot",
   "dockerComposeFile": [
     "../compose.yaml"
   ],
-  "service": "reminder",
+  "service": "discord-bot",
+<<<<<<< HEAD
+  "workspaceFolder": "/discord-bot",
+  "postAttachCommand": "cd DiscordBot && poetry install",
+=======
   "workspaceFolder": "/dry",
+  "postAttachCommand": "poetry install",
+>>>>>>> origin/feat/reminder
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-azuretools.vscode-docker",
         "yzhang.markdown-all-in-one",
         "EditorConfig.EditorConfig",
-        "zxh404.vscode-proto3",
-        "Swellaby.rust-pack"
+        "tamasfe.even-better-toml"
       ]
     }
   }
