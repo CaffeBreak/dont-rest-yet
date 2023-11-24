@@ -15,7 +15,7 @@
         "tamasfe.even-better-toml",
         "VisualStudioExptTeam.vscodeintellicode",
         "ms-python.python",
-        "ms-python.mypy-type-checker"
+        "ms-python.vscode-pylance"
       ]
     }
   }
