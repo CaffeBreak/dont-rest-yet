@@ -4,15 +4,18 @@
     "../compose.yaml"
   ],
   "service": "classroom",
-  "workspaceFolder": "/classroom",
-  "postAttachCommand": "poetry install",
+  "workspaceFolder": "/dry",
+  "postAttachCommand": "cd classroom && poetry install && echo \"source $(cd /dry/classroom && poetry env info -p)/bin/activate\" >> ~/.bashrc",
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-azuretools.vscode-docker",
         "yzhang.markdown-all-in-one",
         "EditorConfig.EditorConfig",
-        "tamasfe.even-better-toml"
+        "tamasfe.even-better-toml",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "ms-python.python",
+        "ms-python.vscode-pylance"
       ]
     }
   }

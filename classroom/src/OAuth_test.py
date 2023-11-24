@@ -95,7 +95,5 @@ def run_local_server():
 
 if __name__ == "__main__":
 
-  run_local_server()
-
   # Run the Discord bot
-  bot.run(os.getenv("TOKEN"))
+  bot.run(os.getenv(DISCORD_BOT_TOKEN))
