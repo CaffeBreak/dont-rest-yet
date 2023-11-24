@@ -1,6 +1,7 @@
 from discord import app_commands, Interaction
 import calendar
 import discord
+import asyncio
 from grpclib.client import Channel
 from pb.dry import reminder
 from discord.ui import Select, View
@@ -25,7 +26,6 @@ class SelectView(View):
     response = await service.delete_task(request)
     print(response)
     await interaction.response.send_message(content=f"<@{interaction.user.id}>選択されたリマインドを削除しました")
-  
 
 class Remindcmd(app_commands.Group):
   def __init__(self, name: str):
@@ -141,13 +141,18 @@ class Remindcmd(app_commands.Group):
       
         # タスクごとにdiscord.SelectOptionオブジェクトを生成し、optionsに追加
     for task in tasks:
-      option = discord.SelectOption(label=task.title, value=task.id )
+      formatted_datetime = task.remind_at.strftime('%Y-%m-%d %H:%M')
+      label_with_datetime = f"{task.title} - {formatted_datetime}"
+      option = discord.SelectOption(label=label_with_datetime, value=task.id)
       options.append(option)
 
     view = SelectView()
     # selectMenuのoptionsを更新
     view.selectMenu.options = options
     await interaction.response.send_message("どのリマインドを削除しますか？", view=view)
+    await asyncio.sleep(20)
+    await interaction.delete_original_response()
+
 
 
     
