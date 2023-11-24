@@ -73,16 +73,16 @@ impl TaskRepository for TaskRepositorySurrealDriver {
     }
 
     async fn list(&self, who: Option<User>) -> Result<Vec<domain::task::Task>> {
-        let list = DB.query("select * from task");
         let list: Vec<TaskRecord> = match who {
-            Some(who) => list
-                .query("where who = $who")
+            Some(who) => DB
+                .query("select * from task where who = $who;")
                 .bind(("who", who.id))
                 .await?
-                .take(1)
+                .take(0)
                 .unwrap(),
-            None => list.await?.take(0).unwrap(),
+            None => DB.query("select * from task").await?.take(0).unwrap(),
         };
+        log!("DEBUG" | "Listed: {:?}", list);
 
         Ok(list
             .iter()
@@ -92,6 +92,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
 
     async fn delete(&self, id: Id) -> Result<domain::task::Task> {
         let deleted: TaskRecord = DB.delete(("task", id.to_string())).await?.unwrap();
+        log!("DEBUG" | "Deleted: {:?}", deleted);
 
         Ok(deleted.into())
     }
