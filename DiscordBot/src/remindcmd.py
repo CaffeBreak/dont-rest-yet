@@ -1,15 +1,12 @@
-from pickletools import opcodes
-from urllib import request
-from click import Option
-from discord import Client, app_commands, Interaction
+from discord import app_commands, Interaction
+import calendar
 import discord
 from grpclib.client import Channel
 from pb.dry import reminder
-
 from discord.ui import Select, View
 from datetime import datetime, timezone
-from google.protobuf.timestamp_pb2 import Timestamp
 from discord import Embed
+
 class SelectView(View):
   @discord.ui.select(
          cls=Select,
@@ -47,32 +44,35 @@ class Remindcmd(app_commands.Group):
         リマインドする時間(18:00)
     """
     try:
-      month, day = map(int, days.split('/'))
-      hour, minute = map(int, time.split(':'))
-    except ValueError:  
-      if '/' not in days:
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>日付の形式が正しくありません。月/日の形式で入力してください")
+        month, day = map(int, days.split('/'))
+        hour, minute = map(int, time.split(':'))
+    except ValueError:
+        if '/' not in days:
+            await interaction.response.send_message(content=f"<@{interaction.user.id}>日付の形式が正しくありません。月/日の形式で入力してください")
+            return
+        if ':' not in time:
+            await interaction.response.send_message(content=f"<@{interaction.user.id}>時間の形式が正しくありません。時間:分の形式で入力してください")
+            return
         return
-      if ':' not in time:
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>時間の形式が正しくありません。時間:分の形式で入力してください")
-        return
-      return
 
     if not (1 <= month <= 12):
-      await interaction.response.send_message(content=f"<@{interaction.user.id}>月の値が範囲外です。1から12の間で入力してください")
-      return
+        await interaction.response.send_message(content=f"<@{interaction.user.id}>月の値が範囲外です。1から12の間で入力してください")
+        return
 
-    if not (1 <= day <= 31):
-      await interaction.response.send_message(content=f"<@{interaction.user.id}>日の値が範囲外です。1から31の間で入力してください")
-      return
+    # 月ごとの最大の日付を取得
+    max_day_in_month = calendar.monthrange(year=datetime.now().year, month=month)[1]
+    
+    if not (1 <= day <= max_day_in_month):
+        await interaction.response.send_message(content=f"<@{interaction.user.id}>日の値が範囲外です。{month}月は1日から{max_day_in_month}日の間で入力してください")
+        return
 
     if not (0 <= hour <= 23):
-      await interaction.response.send_message(content=f"<@{interaction.user.id}>時間の値が範囲外です。0から23の間で入力してください")
-      return
+        await interaction.response.send_message(content=f"<@{interaction.user.id}>時間の値が範囲外です。0から23の間で入力してください")
+        return
 
     if not (0 <= minute <= 59):
-      await interaction.response.send_message(content=f"<@{interaction.user.id}>分の値が範囲外です。0から59の間で入力してください")
-      return
+        await interaction.response.send_message(content=f"<@{interaction.user.id}>分の値が範囲外です。0から59の間で入力してください")
+        return
 
 
     year = datetime.now().year
