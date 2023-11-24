@@ -46,17 +46,6 @@ impl Id {
 
         TIME_2000.clone() + Duration::milliseconds(duration_millisecond)
     }
-
-    pub fn from_str(str: String) -> Self {
-        let mut result: [u8; 10] = [0; 10];
-        let chars = str.as_bytes();
-
-        for i in 0..10 {
-            result[i] = BASE36_CHARS.iter().position(|&c| c == chars[i]).unwrap() as u8;
-        }
-
-        Id(Box::new(result))
-    }
 }
 
 impl Display for Id {
@@ -70,6 +59,20 @@ impl Display for Id {
                 .collect::<String>()
         )?;
         Ok(())
+    }
+}
+
+impl From<String> for Id {
+    fn from(value: String) -> Self {
+        let mut result: [u8; 10] = [0; 10];
+        let binding = value.to_ascii_lowercase();
+        let chars = binding.as_bytes();
+
+        for i in 0..10 {
+            result[i] = BASE36_CHARS.iter().position(|&c| c == chars[i]).unwrap() as u8;
+        }
+
+        Self(Box::new(result))
     }
 }
 
@@ -118,6 +121,6 @@ mod test {
     fn parse_id_from_string() {
         let str = "9ldtw7e4l7".to_string();
 
-        println!("{}", Id::from_str(str))
+        println!("{}", Id::from(str))
     }
 }

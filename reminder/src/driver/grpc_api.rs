@@ -85,7 +85,7 @@ impl TaskService for TaskSrv {
         log!("gRPC" -> format!("<<< Delete task request received.").cyan());
 
         let deleted = TASK_SERVICE
-            .delete_task(Id::from_str(delete_task_request.id))
+            .delete_task(Id::from(delete_task_request.id))
             .await
             .unwrap();
 
