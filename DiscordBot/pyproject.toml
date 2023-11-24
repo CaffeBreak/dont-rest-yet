@@ -16,6 +16,9 @@ py-cord = "^2.4.1"
 protobuf = "^4.25.1"
 types-protobuf = "^4.24.0.4"
 discord-py = "^2.3.2"
+betterproto = { extras = [
+  "compiler",
+], version = "^2.0.0b6", allow-prereleases = true }
 
 
 [tool.poetry.group.dev.dependencies]

@@ -1,9 +1,11 @@
 from remindcmd import Remindcmd
 from discord import Intents, Client
+from grpclib.client import Channel
 from discord.app_commands import CommandTree
 import os
 from dotenv import load_dotenv
 
+channel = Channel(host= "reminder", port=58946)
 
 dotenv_path = '../.env'
 load_dotenv(verbose=True, dotenv_path=dotenv_path)
@@ -20,6 +22,9 @@ class MyClient(Client):
   async def setup_hook(self) -> None:
     print("同期開始")
     await self.tree.sync()
+  async def on_close(self) -> None:
+    print("終了します")
+    channel.close()
 
 intents = Intents.default()
 client = MyClient(intents=intents)
