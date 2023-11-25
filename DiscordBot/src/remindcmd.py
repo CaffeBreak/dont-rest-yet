@@ -25,7 +25,7 @@ class SelectView(View):
     service = reminder.TaskServiceStub(channel)
     response = await service.delete_task(request)
     print(response)
-    await interaction.response.send_message(content=f"<@{interaction.user.id}>選択されたリマインドを削除しました")
+    await interaction.response.send_message(content=f"<@{interaction.user.id}>選択されたリマインド{response.title}を削除しました")
 
 class Remindcmd(app_commands.Group):
   def __init__(self, name: str):

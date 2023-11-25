@@ -13,7 +13,6 @@ from typing import (
 )
 
 import betterproto
-import betterproto.lib.google.protobuf as betterproto_lib_google_protobuf
 import grpclib
 from betterproto.grpc.grpclib_server import ServiceBase
 
@@ -96,11 +95,11 @@ class TaskServiceStub(betterproto.ServiceStub):
         timeout: Optional[float] = None,
         deadline: Optional["Deadline"] = None,
         metadata: Optional["MetadataLike"] = None
-    ) -> "betterproto_lib_google_protobuf.Empty":
+    ) -> "Task":
         return await self._unary_unary(
             "/dry.reminder.TaskService/DeleteTask",
             delete_task_request,
-            betterproto_lib_google_protobuf.Empty,
+            Task,
             timeout=timeout,
             deadline=deadline,
             metadata=metadata,
@@ -114,9 +113,7 @@ class TaskServiceBase(ServiceBase):
     async def list_task(self, list_task_request: "ListTaskRequest") -> "Tasks":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
 
-    async def delete_task(
-        self, delete_task_request: "DeleteTaskRequest"
-    ) -> "betterproto_lib_google_protobuf.Empty":
+    async def delete_task(self, delete_task_request: "DeleteTaskRequest") -> "Task":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
 
     async def __rpc_create_task(
@@ -134,8 +131,7 @@ class TaskServiceBase(ServiceBase):
         await stream.send_message(response)
 
     async def __rpc_delete_task(
-        self,
-        stream: "grpclib.server.Stream[DeleteTaskRequest, betterproto_lib_google_protobuf.Empty]",
+        self, stream: "grpclib.server.Stream[DeleteTaskRequest, Task]"
     ) -> None:
         request = await stream.recv_message()
         response = await self.delete_task(request)
@@ -159,6 +155,6 @@ class TaskServiceBase(ServiceBase):
                 self.__rpc_delete_task,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 DeleteTaskRequest,
-                betterproto_lib_google_protobuf.Empty,
+                Task,
             ),
         }
