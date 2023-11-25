@@ -17,7 +17,7 @@ impl From<grpc_api::reminder::Task> for Task {
     fn from(value: grpc_api::reminder::Task) -> Self {
         let remind_at = value.remind_at.unwrap();
         Self {
-            id: Id::from_str(value.id),
+            id: Id::from(value.id),
             title: value.title,
             remind_at: DateTime::<Utc>::from_timestamp(
                 remind_at.seconds,

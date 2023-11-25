@@ -37,7 +37,7 @@ impl From<Task> for TaskRecord {
 impl Into<Task> for TaskRecord {
     fn into(self) -> Task {
         Task {
-            id: Id::from_str(self.id.id.to_string()),
+            id: Id::from(self.id.id.to_string()),
             title: self.title,
             remind_at: self.remind_at,
             who: User { id: self.who },
