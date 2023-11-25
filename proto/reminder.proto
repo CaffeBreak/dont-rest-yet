@@ -3,12 +3,11 @@ syntax = "proto3";
 package dry.reminder;
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/empty.proto";
 
 service TaskService {
   rpc CreateTask (CreateTaskRequest) returns (Task) {}
   rpc ListTask (ListTaskRequest) returns (Tasks) {}
-  rpc DeleteTask (DeleteTaskRequest) returns (google.protobuf.Empty) {}
+  rpc DeleteTask (DeleteTaskRequest) returns (Task) {}
 }
 
 message Task {

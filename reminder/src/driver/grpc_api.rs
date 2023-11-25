@@ -80,7 +80,7 @@ impl TaskService for TaskSrv {
     async fn delete_task(
         &self,
         request: Request<DeleteTaskRequest>,
-    ) -> Result<Response<()>, Status> {
+    ) -> Result<Response<Task>, Status> {
         let delete_task_request = request.into_inner();
         log!("gRPC" -> format!("<<< Delete task request received.").cyan());
 
@@ -91,7 +91,7 @@ impl TaskService for TaskSrv {
 
         log!("gRPC" -> format!(">>> Task deleted.").cyan());
         log!("DEBUG" -> format!("Deleted: {:?}", deleted).dimmed());
-        Ok(Response::new(()))
+        Ok(Response::new(deleted.into()))
     }
 }
 
