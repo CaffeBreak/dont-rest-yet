@@ -1,1 +1,4 @@
 surrealdb/
+.DS_Store
+.env
+DiscordBot/src/main-2023-11-24.py
