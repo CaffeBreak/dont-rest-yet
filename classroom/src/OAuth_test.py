@@ -18,8 +18,10 @@ sys.path.append(
 )
 
 
-dotenv_path = join(dirname(__name__), ".env")
+dotenv_path = '../.env'
 load_dotenv(verbose=True, dotenv_path=dotenv_path)
+
+DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 CLIENT_SECRETS_FILE = (
     "./credentials.json"
@@ -95,5 +97,4 @@ def run_local_server():
 
 if __name__ == "__main__":
 
-  # Run the Discord bot
-  bot.run(os.getenv(DISCORD_BOT_TOKEN))
+  bot.run(os.getenv('DISCORD_BOT_TOKEN'))
