@@ -1,28 +1,41 @@
 version: "3"
 services:
   discord-bot:
-    build: 
+    build:
       context: ..
       dockerfile: .devcontainer/discord-bot/Dockerfile
     volumes:
-      - ..:/discord-bot
+      - ..:/dry
     init: true
     tty: true
 
   classroom:
-    build: 
+    build:
       context: ..
       dockerfile: .devcontainer/classroom/Dockerfile
     volumes:
-      - ..:/classroom
+      - ..:/dry
     init: true
     tty: true
 
   reminder:
-    build: 
+    build:
       context: ..
       dockerfile: .devcontainer/reminder/Dockerfile
     volumes:
-      - ..:/reminder
+      - ..:/dry
+    env_file:
+      - ../reminder/.env
+    ports:
+      - ${GRPC_PORT:-58946}:${GRPC_PORT:-58946}
     init: true
     tty: true
+
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    ports:
+      - 8000:8000
+    volumes:
+      - ../surrealdb:/surrealdb
+    user: root
+    command: start --auth --user root --pass root file:/surrealdb/databese.db
