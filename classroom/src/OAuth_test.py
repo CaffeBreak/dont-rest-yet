@@ -94,15 +94,20 @@ async def run_local_server():
   app.router.add_get("/callback", handle_callback)
   runner = web.AppRunner(app)
   await runner.setup()
-  site = web.TCPSite(runner, '127.0.0.1', 8080)
+  site = web.TCPSite(runner, 'izumo-desktop.taila089c.ts.net', 8080)
   await site.start()
+  while True:
+    await asyncio.sleep(3600)
+
+
+app = web.Application()
+app.router.add_get("/callback", handle_callback)
 
 
 async def main():
   # Webサーバーとボットを並行して実行
   await asyncio.gather(
-      bot.start(DISCORD_BOT_TOKEN),
-      run_local_server()
+      run_local_server(),
   )
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@
   },
   "autopep8.args": [
     "--indent-size=2",
-    "--ignore=E111,E114"
+    "--ignore=E111,E114,E402,E501"
   ],
   "flake8.args": [
     "--ignore=E111,E114,E402,E501"
