@@ -1,0 +1,6 @@
+<<<<<<< HEAD
+.DS_Store
+.env
+=======
+surrealdb/
+>>>>>>> origin/feat/reminder

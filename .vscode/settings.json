@@ -1,0 +1,9 @@
+{
+  "python.analysis.extraPaths": [
+    "./DiscordBot/src/proto",
+    "./DiscordBot/src/pb",
+    "./DiscordBot/src"
+  ],
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true
+}

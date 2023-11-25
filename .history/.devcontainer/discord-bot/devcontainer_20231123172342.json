@@ -1,0 +1,19 @@
+{
+  "name": "Discord Bot",
+  "dockerComposeFile": [
+    "../compose.yaml"
+  ],
+  "service": "discord-bot",
+  "workspaceFolder": "/discord-bot",
+  "postAttachCommand": "poetry install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "yzhang.markdown-all-in-one",
+        "EditorConfig.EditorConfig",
+        "tamasfe.even-better-toml"
+      ]
+    }
+  }
+}
