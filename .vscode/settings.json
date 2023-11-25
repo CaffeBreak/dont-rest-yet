@@ -13,6 +13,7 @@
     "--ignore=E111,E114"
   ],
   "flake8.args": [
-    "--ignore=E111,E114,E402,E501"
-  ]
+    "--ignore=E111,E114,E125,E704,E402,E501"
+  ],
+  "editor.formatOnSave": true
 }

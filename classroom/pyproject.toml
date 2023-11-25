@@ -15,6 +15,9 @@ google-auth-oauthlib = "^1.1.0"
 google-auth-stubs = "^0.2.0"
 
 
+[tool.poetry.group.dev.dependencies]
+google-auth-oauthlib-stubs = {git = "https://github.com/cffnpwr/google-auth-oauthlib-stubs.git"}
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
