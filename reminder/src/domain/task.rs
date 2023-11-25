@@ -1,8 +1,13 @@
+use std::future::Future;
+
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use prost_types::Timestamp;
 
-use crate::{driver::grpc_api, misc::id::Id};
+use crate::{
+    driver::grpc_api,
+    misc::{error::ReminderError, id::Id},
+};
 
 use super::user::User;
 
@@ -36,10 +41,7 @@ impl Into<grpc_api::reminder::Task> for Task {
         grpc_api::reminder::Task {
             id: self.id.to_string(),
             title: self.title,
-            remind_at: Some(Timestamp {
-                seconds: seconds,
-                nanos: nanos,
-            }),
+            remind_at: Some(Timestamp { seconds, nanos }),
             who: self.who.id,
         }
     }
@@ -52,10 +54,11 @@ pub trait TaskRepository {
         title: String,
         remind_at: DateTime<Utc>,
         who: User,
-    ) -> impl std::future::Future<Output = Result<Task>> + Send;
+    ) -> impl Future<Output = Result<Task, ReminderError>> + Send;
+    fn get(&self, id: Id) -> impl Future<Output = Result<Task, ReminderError>> + Send;
     fn list(
         &self,
         who: Option<User>,
-    ) -> impl std::future::Future<Output = Result<Vec<Task>>> + Send;
-    fn delete(&self, id: Id) -> impl std::future::Future<Output = Result<Task>> + Send;
+    ) -> impl Future<Output = Result<Vec<Task>, ReminderError>> + Send;
+    fn delete(&self, id: Id) -> impl Future<Output = Result<Task, ReminderError>> + Send;
 }

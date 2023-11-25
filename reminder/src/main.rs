@@ -8,6 +8,7 @@ use init::init_db;
 pub mod config;
 pub mod domain;
 pub mod driver;
+pub mod endpoint;
 pub mod init;
 pub mod misc;
 pub mod service;

@@ -1,17 +1,16 @@
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use surrealdb::sql::Thing;
 
 use crate::{
     domain::{
-        self,
         task::{Task, TaskRepository},
         user::User,
     },
     init::DB,
     log,
-    misc::id::Id,
+    misc::{error::ReminderError, id::Id},
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -54,7 +53,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
         title: String,
         remind_at: DateTime<Utc>,
         who: User,
-    ) -> Result<Task> {
+    ) -> Result<Task, ReminderError> {
         let mut created: Vec<TaskRecord> = DB
             .create("task")
             .content(TaskRecord {
@@ -66,21 +65,39 @@ impl TaskRepository for TaskRepositorySurrealDriver {
                 remind_at,
                 who: who.id.clone(),
             })
-            .await?;
+            .await
+            .map_err(|error| ReminderError::DBOperationError(error))?;
         log!("DEBUG" | "Created: {:?}", created);
 
-        Ok(TaskRecord::into(created.pop().unwrap()))
+        Ok(created.pop().unwrap().into())
     }
 
-    async fn list(&self, who: Option<User>) -> Result<Vec<domain::task::Task>> {
+    async fn get(&self, id: Id) -> Result<Task, ReminderError> {
+        let task: TaskRecord = DB
+            .select(("task", id.to_string()))
+            .await
+            .map_err(|error| ReminderError::DBOperationError(error))?
+            .ok_or(ReminderError::TaskNotFound { id: id.to_string() })?;
+        log!("DEBUG" | "Got: {:?}", task);
+
+        Ok(task.into())
+    }
+
+    async fn list(&self, who: Option<User>) -> Result<Vec<Task>, ReminderError> {
         let list: Vec<TaskRecord> = match who {
             Some(who) => DB
                 .query("select * from task where who = $who;")
                 .bind(("who", who.id))
-                .await?
+                .await
+                .map_err(|error| ReminderError::DBOperationError(error))?
                 .take(0)
                 .unwrap(),
-            None => DB.query("select * from task").await?.take(0).unwrap(),
+            None => DB
+                .query("select * from task")
+                .await
+                .map_err(|error| ReminderError::DBOperationError(error))?
+                .take(0)
+                .unwrap(),
         };
         log!("DEBUG" | "Listed: {:?}", list);
 
@@ -90,8 +107,12 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             .collect())
     }
 
-    async fn delete(&self, id: Id) -> Result<domain::task::Task> {
-        let deleted: TaskRecord = DB.delete(("task", id.to_string())).await?.unwrap();
+    async fn delete(&self, id: Id) -> Result<Task, ReminderError> {
+        let deleted: TaskRecord = DB
+            .delete(("task", id.to_string()))
+            .await
+            .map_err(|error| ReminderError::DBOperationError(error))?
+            .unwrap();
         log!("DEBUG" | "Deleted: {:?}", deleted);
 
         Ok(deleted.into())

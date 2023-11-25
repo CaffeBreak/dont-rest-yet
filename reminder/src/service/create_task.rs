@@ -1,4 +1,4 @@
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 
 use crate::{
@@ -6,7 +6,7 @@ use crate::{
         task::{Task, TaskRepository},
         user::User,
     },
-    misc::id::Id,
+    misc::{error::ReminderError, id::Id},
 };
 
 use super::service::TaskService;
@@ -17,12 +17,12 @@ impl<T: TaskRepository> TaskService<T> {
         title: String,
         remind_at: DateTime<Utc>,
         who: User,
-    ) -> Result<Task> {
-        let created = self
+    ) -> Result<Task, ReminderError> {
+        let created_result = self
             .task_repo
             .create(Id::new(), title, remind_at, who)
-            .await?;
+            .await;
 
-        Ok(created)
+        created_result
     }
 }
