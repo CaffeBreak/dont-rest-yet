@@ -1,11 +1,8 @@
-from __future__ import print_function
-
 import os
 import os.path
 import sys
 import uuid
-from os.path import dirname, join
-
+import asyncio
 import discord
 from aiohttp import web
 from discord.ext import commands
@@ -24,7 +21,7 @@ load_dotenv(verbose=True, dotenv_path=dotenv_path)
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 CLIENT_SECRETS_FILE = (
-    "./credentials.json"
+    "../credentials.json"
 )
 SCOPES = ["https://www.googleapis.com/auth/classroom.courses.readonly"]
 REDIRECT_URI = "http://localhost:8080/callback"
@@ -37,18 +34,21 @@ bot = commands.Bot(command_prefix="!", intents=intents)  # intents引数を提�
 
 @bot.event
 async def on_ready_send_message():
-  print(f"{bot.user.name} has connected to Discord!")
+  if bot.user is not None:
+    print(f"{bot.user.name} has connected to Discord!")
 
 
-auth_codes: dict[int] = {}  # 一時認証コードからdiscord_user_idを取得するのに使う{[discord_user_id;一時認証コード]}
+# 一時認証コードからdiscord_user_idを取得するのに使う{[discord_user_id;一時認証コード]}
+auth_codes: dict[str, int] = {}
 
 # !auth のコマンドで OAuth の URL をユーザーにDM送付
 
 
 @bot.command(name="auth")
-async def start_auth(ctx):
+async def start_auth(ctx: commands.Context):
   # 認証ファイルからURLのオブジェクト作成
   flow = Flow.from_client_secrets_file(
+
       CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=REDIRECT_URI
   )
 
@@ -89,12 +89,21 @@ async def handle_callback(request):
   return web.Response(text="認証が成功しました。このウィンドウを閉じてください。")
 
 
-def run_local_server():
+async def run_local_server():
   app = web.Application()
   app.router.add_get("/callback", handle_callback)
-  web.run_app(app, port=8080)
+  runner = web.AppRunner(app)
+  await runner.setup()
+  site = web.TCPSite(runner, '127.0.0.1', 8080)
+  await site.start()
 
+
+async def main():
+  # Webサーバーとボットを並行して実行
+  await asyncio.gather(
+      bot.start(DISCORD_BOT_TOKEN),
+      run_local_server()
+  )
 
 if __name__ == "__main__":
-
-  bot.run(os.getenv('DISCORD_BOT_TOKEN'))
+  asyncio.run(main())

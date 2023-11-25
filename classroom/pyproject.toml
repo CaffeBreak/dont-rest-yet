@@ -3,7 +3,7 @@ name = "classroom"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
-readme = "README.md"
+packages = [{ include = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -12,6 +12,7 @@ discord-py = "^2.3.2"
 python-dotenv = "^1.0.0"
 google = "^3.0.0"
 google-auth-oauthlib = "^1.1.0"
+google-auth-stubs = "^0.2.0"
 
 
 [build-system]
