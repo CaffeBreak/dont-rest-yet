@@ -10,10 +10,7 @@ from dotenv import load_dotenv
 from google_auth_oauthlib.flow import Flow
 
 # pipでパスが通らなかったときの名残
-sys.path.append(
-    "./myenv/lib/site-packages"
-)
-
+sys.path.append("./myenv/lib/site-packages")
 
 dotenv_path = '../.env'
 load_dotenv(verbose=True, dotenv_path=dotenv_path)
@@ -73,9 +70,9 @@ async def handle_callback(request):
     # 一時コードが無効な場合、エラーメッセージを表示
     return web.Response(text="認証が失敗したので、もう一度試すか、管理者に問い合わせてください。")
 
-  flow = Flow.from_client_secrets_file(
-      CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=REDIRECT_URI
-  )
+  flow = Flow.from_client_secrets_file(CLIENT_SECRETS_FILE,
+                                       scopes=SCOPES,
+                                       redirect_uri=REDIRECT_URI)
   flow.fetch_token(code=code)
 
   credentials = flow.credentials

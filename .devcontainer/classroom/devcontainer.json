@@ -9,16 +9,16 @@
   "customizations": {
     "vscode": {
       "extensions": [
-		"ms-azuretools.vscode-docker",
-		"yzhang.markdown-all-in-one",
-		"EditorConfig.EditorConfig",
-		"tamasfe.even-better-toml",
-		"VisualStudioExptTeam.vscodeintellicode",
-		"ms-python.python",
-		"ms-python.vscode-pylance",
-		"ms-python.autopep8",
-		"ms-python.flake8"
-	]
+        "ms-azuretools.vscode-docker",
+        "yzhang.markdown-all-in-one",
+        "EditorConfig.EditorConfig",
+        "tamasfe.even-better-toml",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.autopep8",
+        "ms-python.flake8"
+      ]
     }
   }
 }
