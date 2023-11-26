@@ -2,7 +2,7 @@ import os
 import os.path
 import sys
 import uuid
-import asyncio
+import threading
 import discord
 from aiohttp import web
 from discord.ext import commands
@@ -24,7 +24,7 @@ CLIENT_SECRETS_FILE = (
     "../credentials.json"
 )
 SCOPES = ["https://www.googleapis.com/auth/classroom.courses.readonly"]
-REDIRECT_URI = "http://localhost:8080/callback"
+REDIRECT_URI = "http://izumo-desktop.taila089c.ts.net/callback"
 
 intents = discord.Intents.default()  # デフォルトのintentsを取得
 intents.message_content = True  # メッセージの内容を読み取るためのintentを有効にする
@@ -89,26 +89,24 @@ async def handle_callback(request):
   return web.Response(text="認証が成功しました。このウィンドウを閉じてください。")
 
 
-async def run_local_server():
+def run_discord_bot():
+  bot.run(DISCORD_BOT_TOKEN)
+
+
+def run_local_server():
   app = web.Application()
   app.router.add_get("/callback", handle_callback)
-  runner = web.AppRunner(app)
-  await runner.setup()
-  site = web.TCPSite(runner, 'izumo-desktop.taila089c.ts.net', 8080)
-  await site.start()
-  while True:
-    await asyncio.sleep(3600)
+  web.run_app(app, port=8080)
 
 
-app = web.Application()
-app.router.add_get("/callback", handle_callback)
+def main():
+  # Discord ボットを別のスレッドで実行
+  bot_thread = threading.Thread(target=run_discord_bot)
+  bot_thread.start()
 
+  # Web サーバーを現在のスレッドで実行
+  run_local_server()
 
-async def main():
-  # Webサーバーとボットを並行して実行
-  await asyncio.gather(
-      run_local_server(),
-  )
 
 if __name__ == "__main__":
-  asyncio.run(main())
+  main()
