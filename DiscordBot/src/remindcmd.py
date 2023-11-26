@@ -34,6 +34,7 @@ class Remindcmd(app_commands.Group):
   @app_commands.command(name="add", description="リマインドを行います")
   async def add(self, interaction: Interaction, main: str, days: str, time: str):
     """
+    
     main : str
         リマインドしたい内容 
         
@@ -76,6 +77,10 @@ class Remindcmd(app_commands.Group):
 
 
     year = datetime.now().year
+    now = datetime.now(timezone.utc)
+    if datetime(year, month, day, hour, minute, 0, tzinfo=timezone.utc) < now:
+      year += 1  # 今の時刻より前ならば、翌年にする
+
     Uid = interaction.user.id
     print(Uid)
     print(type(Uid))
@@ -152,6 +157,7 @@ class Remindcmd(app_commands.Group):
     await interaction.response.send_message("どのリマインドを削除しますか？", view=view)
     await asyncio.sleep(20)
     await interaction.delete_original_response()
+
 
 
 

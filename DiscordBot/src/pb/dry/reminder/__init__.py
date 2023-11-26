@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import (
     TYPE_CHECKING,
+    AsyncIterator,
     Dict,
     List,
     Optional,
@@ -106,6 +107,26 @@ class TaskServiceStub(betterproto.ServiceStub):
         )
 
 
+class NotificationServiceStub(betterproto.ServiceStub):
+    async def push_notification(
+        self,
+        betterproto_lib_google_protobuf_empty: "betterproto_lib_google_protobuf.Empty",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> AsyncIterator["Task"]:
+        async for response in self._unary_stream(
+            "/dry.reminder.NotificationService/PushNotification",
+            betterproto_lib_google_protobuf_empty,
+            Task,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        ):
+            yield response
+
+
 class TaskServiceBase(ServiceBase):
     async def create_task(self, create_task_request: "CreateTaskRequest") -> "Task":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
@@ -155,6 +176,36 @@ class TaskServiceBase(ServiceBase):
                 self.__rpc_delete_task,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 DeleteTaskRequest,
+                Task,
+            ),
+        }
+
+
+class NotificationServiceBase(ServiceBase):
+    async def push_notification(
+        self,
+        betterproto_lib_google_protobuf_empty: "betterproto_lib_google_protobuf.Empty",
+    ) -> AsyncIterator["Task"]:
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+        yield Task()
+
+    async def __rpc_push_notification(
+        self,
+        stream: "grpclib.server.Stream[betterproto_lib_google_protobuf.Empty, Task]",
+    ) -> None:
+        request = await stream.recv_message()
+        await self._call_rpc_handler_server_stream(
+            self.push_notification,
+            stream,
+            request,
+        )
+
+    def __mapping__(self) -> Dict[str, grpclib.const.Handler]:
+        return {
+            "/dry.reminder.NotificationService/PushNotification": grpclib.const.Handler(
+                self.__rpc_push_notification,
+                grpclib.const.Cardinality.UNARY_STREAM,
+                betterproto_lib_google_protobuf.Empty,
                 Task,
             ),
         }
