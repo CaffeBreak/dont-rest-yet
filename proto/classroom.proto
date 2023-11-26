@@ -1,0 +1,30 @@
+syntax = "proto3"; 
+
+package dry.classroom;
+
+service AuthService {
+  rpc NewAuth (NewAuthRequest) returns (AuthUrl){}
+  rpc ClassroomTaskList (ClassroomTaskListRequest) returns (ClassroomTaskList){}
+}
+
+message ClassroomTaskListRequest{
+  string who = 1;
+}
+
+message ClassroomTask{
+  string title = 2;
+}
+
+message ClassroomTaskList{
+  repeated ClassroomTask list = 1;
+}
+
+
+message AuthUrl {
+  string url = 1;
+}
+
+message NewAuthRequest {
+  string who = 1;
+}
+
