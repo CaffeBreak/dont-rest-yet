@@ -1,2 +1,2 @@
-pub mod grpc_api;
-pub mod task_repository;
+pub(crate) mod grpc_api;
+pub(crate) mod task_repository;

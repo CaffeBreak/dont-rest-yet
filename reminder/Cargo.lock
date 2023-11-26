@@ -2292,6 +2292,7 @@ name = "reminder"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-stream",
  "chrono",
  "chrono-tz",
  "colored",
@@ -2304,6 +2305,7 @@ dependencies = [
  "surrealdb",
  "thiserror",
  "tokio",
+ "tokio-stream",
  "tonic",
  "tonic-build",
  "tonic-reflection",

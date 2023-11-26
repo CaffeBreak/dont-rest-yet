@@ -3,10 +3,15 @@ use std::net::SocketAddr;
 use tonic::transport::Server;
 
 use crate::{
-    driver::grpc_api::reminder::FILE_DESCRIPTOR_SET, endpoint::task::TaskSrv, init::CONFIG, log,
+    driver::grpc_api::reminder::FILE_DESCRIPTOR_SET,
+    endpoint::{notification::NotificationSrv, task::TaskSrv},
+    init::CONFIG,
+    log,
 };
 
-use self::reminder::task_service_server::TaskServiceServer;
+use self::reminder::{
+    notification_service_server::NotificationServiceServer, task_service_server::TaskServiceServer,
+};
 
 pub mod reminder {
     tonic::include_proto!("dry.reminder");
@@ -26,8 +31,9 @@ pub async fn serve() -> anyhow::Result<()> {
     Server::builder()
         .add_service(reflection_service)
         .add_service(TaskServiceServer::new(TaskSrv))
+        .add_service(NotificationServiceServer::new(NotificationSrv))
         .serve(addr)
         .await?;
 
-    anyhow::Ok(())
+    Ok(())
 }
