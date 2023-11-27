@@ -28,31 +28,16 @@ impl<T: TaskRepository> NotificationService<T> {
         }
     }
 
-    pub(crate) async fn sort_cache(&self) -> Result<()> {
-        let mut locked_cache = self.task_cache.lock().await;
-        locked_cache.sort_by(|a, b| a.id.clone().parse().cmp(&b.id.clone().parse()));
-
-        Ok(())
-    }
-
     pub(crate) async fn add_cache(&self, task: Task) -> Result<()> {
-        {
-            let mut locked_cache = self.task_cache.lock().await;
-            locked_cache.push(task);
-        }
-
-        self.sort_cache().await?;
+        let mut locked_cache = self.task_cache.lock().await;
+        locked_cache.push(task);
 
         Ok(())
     }
 
     pub(crate) async fn delete_cache(&self, id: Id) -> Result<()> {
-        {
-            let mut locked_cache = self.task_cache.lock().await;
-            locked_cache.retain(|task| task.id != id);
-        }
-
-        self.sort_cache().await?;
+        let mut locked_cache = self.task_cache.lock().await;
+        locked_cache.retain(|task| task.id != id);
 
         Ok(())
     }

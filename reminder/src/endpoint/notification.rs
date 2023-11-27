@@ -34,7 +34,7 @@ impl NotificationService for NotificationSrv {
                 match sent {
                     Ok(_) => {
                         log!("gRPC" -> format!(">>> A notification sent.").cyan());
-                        log!("DEBUG" -> format!("Sent: {:?}", task_debug));
+                        log!("DEBUG" -> format!("Sent: {:?}", task_debug).dimmed());
                     }
                     Err(error) => {
                         log!("ERROR" -> "Failed to send a message.".bold().red());

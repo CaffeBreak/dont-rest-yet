@@ -15,18 +15,18 @@ impl<T: TaskRepository> NotificationService<T> {
             let mut interval = time::interval(Duration::from_secs(10));
 
             loop {
-                {
-                    let mut task_cache = match self.task_cache.try_lock() {
-                        Ok(locked_task) => locked_task,
-                        Err(_) => continue,
-                    };
-                    if task_cache.len() < 1 {
-                        continue;
+                let mut task_cache = self.task_cache.lock().await;
+                if task_cache.len() > 0 {
+                    let mut delete_flags: Vec<bool> = vec![];
+                    for (i, task) in task_cache.iter().enumerate() {
+                        delete_flags.push((task.remind_at - Utc::now()).num_seconds() < 30);
+                        if delete_flags[i] {
+                            yield task.clone();
+                        }
                     }
 
-                    while task_cache.len() > 0 && (task_cache[0].remind_at - Utc::now()).num_minutes() == 0 {
-                        yield task_cache.pop().unwrap();
-                    }
+                    let mut f = delete_flags.iter();
+                    task_cache.retain(|_| !*f.next().unwrap());
                 }
 
                 interval.tick().await;
