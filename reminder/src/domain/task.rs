@@ -1,7 +1,7 @@
 use std::future::Future;
 
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use prost_types::Timestamp;
 
 use crate::{
@@ -59,6 +59,7 @@ pub trait TaskRepository {
     fn list(
         &self,
         who: Option<User>,
+        duration: Option<Duration>,
     ) -> impl Future<Output = Result<Vec<Task>, ReminderError>> + Send;
     fn delete(&self, id: Id) -> impl Future<Output = Result<Task, ReminderError>> + Send;
 }

@@ -1,11 +1,12 @@
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Timelike, Utc};
 
 use crate::{
     domain::{
         task::{Task, TaskRepository},
         user::User,
     },
+    init::NOTIFICATION_SERVICE,
     misc::{error::ReminderError, id::Id},
 };
 
@@ -23,6 +24,14 @@ impl<T: TaskRepository> TaskService<T> {
             .create(Id::new(), title, remind_at, who)
             .await;
 
-        created_result
+        if let Ok(task) = created_result {
+            if task.remind_at.minute() - Utc::now().minute() <= 30 {
+                NOTIFICATION_SERVICE.add_cache(task.clone()).await.unwrap();
+            }
+
+            Ok(task)
+        } else {
+            created_result
+        }
     }
 }

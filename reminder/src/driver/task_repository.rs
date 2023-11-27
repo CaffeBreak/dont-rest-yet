@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use surrealdb::sql::Thing;
 
@@ -67,7 +67,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             })
             .await
             .map_err(|error| ReminderError::DBOperationError(error))?;
-        log!("DEBUG" | "Created: {:?}", created);
+        log!("DEBUG" -> format!("Created: {:?}", created).dimmed());
 
         Ok(created.pop().unwrap().into())
     }
@@ -78,28 +78,53 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             .await
             .map_err(|error| ReminderError::DBOperationError(error))?
             .ok_or(ReminderError::TaskNotFound { id: id.to_string() })?;
-        log!("DEBUG" | "Got: {:?}", task);
+        log!("DEBUG" -> format!("Got: {:?}", task).dimmed());
 
         Ok(task.into())
     }
 
-    async fn list(&self, who: Option<User>) -> Result<Vec<Task>, ReminderError> {
-        let list: Vec<TaskRecord> = match who {
-            Some(who) => DB
-                .query("select * from task where who = $who;")
+    async fn list(
+        &self,
+        who: Option<User>,
+        duration: Option<Duration>,
+    ) -> Result<Vec<Task>, ReminderError> {
+        let query = "select * from task".to_string();
+        let query = match (who, duration) {
+            (None, None) => DB.query(query),
+            (None, Some(duration)) => {
+                let dt_now = Utc::now();
+                let end_time = dt_now + duration;
+
+                DB.query(format!(
+                    "{} where remind_at >= $dt_now && remind_at <= $duration",
+                    query
+                ))
+                .bind(("dt_now", dt_now))
+                .bind(("duration", end_time))
+            }
+            (Some(who), None) => DB
+                .query(format!("{} where who = $who", query))
+                .bind(("who", who.id)),
+            (Some(who), Some(duration)) => {
+                let dt_now = Utc::now();
+                let end_time = dt_now + duration;
+
+                DB.query(format!(
+                    "{} where remind_at >= $dt_now && remind_at <= $duration && who = $who",
+                    query
+                ))
+                .bind(("dt_now", dt_now))
+                .bind(("duration", end_time))
                 .bind(("who", who.id))
-                .await
-                .map_err(|error| ReminderError::DBOperationError(error))?
-                .take(0)
-                .unwrap(),
-            None => DB
-                .query("select * from task")
-                .await
-                .map_err(|error| ReminderError::DBOperationError(error))?
-                .take(0)
-                .unwrap(),
+            }
         };
-        log!("DEBUG" | "Listed: {:?}", list);
+
+        let list: Vec<TaskRecord> = query
+            .await
+            .map_err(|error| ReminderError::DBOperationError(error))?
+            .take(0)
+            .unwrap();
+        log!("DEBUG" -> format!("Listed: {:?}", list).dimmed());
 
         Ok(list
             .iter()
@@ -113,7 +138,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             .await
             .map_err(|error| ReminderError::DBOperationError(error))?
             .unwrap();
-        log!("DEBUG" | "Deleted: {:?}", deleted);
+        log!("DEBUG" -> format!("Deleted: {:?}", deleted).dimmed());
 
         Ok(deleted.into())
     }
