@@ -107,7 +107,6 @@ pub(crate) async fn init_notification_cache() -> Result<()> {
             let mut cache = NOTIFICATION_SERVICE.task_cache.lock().await;
             *cache = tasks;
         }
-        NOTIFICATION_SERVICE.sort_cache().await.unwrap();
 
         log!("INFO" -> "cache refreshing is finished.".yellow());
         interval.tick().await;
