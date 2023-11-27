@@ -4,7 +4,7 @@ use crate::{
     misc::{error::ReminderError, id::Id},
 };
 use anyhow::Result;
-use chrono::{Timelike, Utc};
+use chrono::Utc;
 
 use super::service::TaskService;
 
@@ -14,8 +14,10 @@ impl<T: TaskRepository> TaskService<T> {
         let delete_result = self.task_repo.delete(target.id).await;
 
         if let Ok(task) = delete_result {
-            let diff = task.remind_at.minute() as i32 - Utc::now().minute() as i32;
-            if diff >= 0 && diff <= (CONFIG.notification_cache_interval * 3).into() {
+            let diff = task.remind_at - Utc::now();
+            if diff.num_minutes() >= 0
+                && diff.num_minutes() <= (CONFIG.notification_cache_interval * 3).into()
+            {
                 NOTIFICATION_SERVICE
                     .delete_cache(task.clone().id)
                     .await

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use async_stream::stream;
-use chrono::{Timelike, Utc};
+use chrono::Utc;
 use tokio::time;
 use tokio_stream::Stream;
 
@@ -24,7 +24,7 @@ impl<T: TaskRepository> NotificationService<T> {
                         continue;
                     }
 
-                    while task_cache.len() > 0 && task_cache[0].remind_at.minute() == Utc::now().minute() {
+                    while task_cache.len() > 0 && (task_cache[0].remind_at - Utc::now()).num_minutes() == 0 {
                         yield task_cache.pop().unwrap();
                     }
                 }
