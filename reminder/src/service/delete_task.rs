@@ -1,6 +1,6 @@
 use crate::{
     domain::task::{Task, TaskRepository},
-    init::NOTIFICATION_SERVICE,
+    init::{CONFIG, NOTIFICATION_SERVICE},
     misc::{error::ReminderError, id::Id},
 };
 use anyhow::Result;
@@ -14,7 +14,9 @@ impl<T: TaskRepository> TaskService<T> {
         let delete_result = self.task_repo.delete(target.id).await;
 
         if let Ok(task) = delete_result {
-            if task.remind_at.minute() - Utc::now().minute() <= 30 {
+            if task.remind_at.minute() as i32 - Utc::now().minute() as i32
+                <= (CONFIG.notification_cache_interval * 3).into()
+            {
                 NOTIFICATION_SERVICE
                     .delete_cache(task.clone().id)
                     .await

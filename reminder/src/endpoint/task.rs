@@ -119,7 +119,7 @@ impl TaskService for TaskSrv {
                 Ok(Response::new(deleted.into()))
             }
             Err(error) => {
-                log!("ERROR" -> format!("Create task falied").bold().red());
+                log!("ERROR" -> format!("Delete task falied").bold().red());
                 log!("ERROR" -> format!("Reason: {}", error.to_string()).bold().red());
                 let error = match error {
                     ReminderError::DBOperationError(error) => Status::internal(error.to_string()),

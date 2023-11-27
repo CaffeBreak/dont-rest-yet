@@ -47,11 +47,9 @@ impl<T: TaskRepository> NotificationService<T> {
     }
 
     pub(crate) async fn delete_cache(&self, id: Id) -> Result<()> {
-        let target = self.task_repo.get(id).await?;
-
         {
             let mut locked_cache = self.task_cache.lock().await;
-            locked_cache.retain(|task| task.id != target.id);
+            locked_cache.retain(|task| task.id != id);
         }
 
         self.sort_cache().await?;

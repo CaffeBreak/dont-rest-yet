@@ -6,7 +6,7 @@ use crate::{
         task::{Task, TaskRepository},
         user::User,
     },
-    init::NOTIFICATION_SERVICE,
+    init::{CONFIG, NOTIFICATION_SERVICE},
     misc::{error::ReminderError, id::Id},
 };
 
@@ -25,7 +25,9 @@ impl<T: TaskRepository> TaskService<T> {
             .await;
 
         if let Ok(task) = created_result {
-            if task.remind_at.minute() - Utc::now().minute() <= 30 {
+            if task.remind_at.minute() as i32 - Utc::now().minute() as i32
+                <= (CONFIG.notification_cache_interval * 3).into()
+            {
                 NOTIFICATION_SERVICE.add_cache(task.clone()).await.unwrap();
             }
 
