@@ -88,12 +88,6 @@ impl TaskRepository for TaskRepositorySurrealDriver {
         who: Option<User>,
         duration: Option<Duration>,
     ) -> Result<Vec<Task>, ReminderError> {
-        let duration = if let Some(d) = duration {
-            Some(d * 3)
-        } else {
-            None
-        };
-
         let query = "select * from task".to_string();
         let query = match (who, duration) {
             (None, None) => DB.query(query),

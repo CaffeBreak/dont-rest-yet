@@ -5,6 +5,7 @@ use chrono::Duration;
 use dotenvy::dotenv;
 use once_cell::sync::Lazy;
 use surrealdb::{engine::any::Any, opt::auth::Root, Surreal};
+use tokio::time;
 
 use crate::{
     config::Config,
@@ -73,30 +74,47 @@ pub(crate) async fn init_db() -> Result<()> {
 
 pub(crate) async fn init_notification_cache() -> Result<()> {
     log!("INFO" -> "Initialize notification cache.".yellow());
-    let tasks = match NOTIFICATION_SERVICE
-        .task_repo
-        .list(
-            None,
-            Some(Duration::minutes(CONFIG.notification_cache_interval.into())),
-        )
-        .await
-    {
-        Ok(tasks) => tasks,
-        Err(error) => match error {
-            ReminderError::DBOperationError(error) => {
-                log!("ERROR" -> "Notification cache initialize failed.".bold().red());
-                log!("ERROR" -> format!("Reason: {}", error.to_string()).bold().red());
 
-                bail!("Notification cache initialize failed.");
-            }
-            ReminderError::TaskNotFound { id: _ } => return Ok(()),
-        },
-    };
-    {
-        let mut cache = NOTIFICATION_SERVICE.task_cache.lock().await;
-        *cache = tasks;
-    }
-    NOTIFICATION_SERVICE.sort_cache().await?;
+    // 定期的にキャッシュを更新する
+    let mut interval = time::interval(time::Duration::from_secs(
+        CONFIG.notification_cache_interval as u64 * 60,
+    ));
+    tokio::spawn(async move {
+        log!("INFO" -> "Start cache refreshing...".yellow());
+
+        let tasks = match NOTIFICATION_SERVICE
+            .task_repo
+            .list(
+                None,
+                Some(Duration::minutes(
+                    (CONFIG.notification_cache_interval * 3).into(),
+                )),
+            )
+            .await
+        {
+            Ok(tasks) => tasks,
+            Err(error) => match error {
+                ReminderError::DBOperationError(error) => {
+                    log!("ERROR" -> "Notification cache failed.".bold().red());
+                    log!("ERROR" -> format!("Reason: {}", error.to_string()).bold().red());
+
+                    bail!("Notification cache failed.");
+                }
+                ReminderError::TaskNotFound { id: _ } => return Ok(()),
+            },
+        };
+        {
+            let mut cache = NOTIFICATION_SERVICE.task_cache.lock().await;
+            *cache = tasks;
+        }
+        NOTIFICATION_SERVICE.sort_cache().await.unwrap();
+
+        log!("INFO" -> "cache refreshing is finished.".yellow());
+        interval.tick().await;
+
+        Ok(())
+    });
+
     log!("INFO" -> "Notifications is cached.".yellow());
 
     Ok(())
