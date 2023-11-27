@@ -14,9 +14,8 @@ impl<T: TaskRepository> TaskService<T> {
         let delete_result = self.task_repo.delete(target.id).await;
 
         if let Ok(task) = delete_result {
-            if task.remind_at.minute() as i32 - Utc::now().minute() as i32
-                <= (CONFIG.notification_cache_interval * 3).into()
-            {
+            let diff = task.remind_at.minute() as i32 - Utc::now().minute() as i32;
+            if diff >= 0 && diff <= (CONFIG.notification_cache_interval * 3).into() {
                 NOTIFICATION_SERVICE
                     .delete_cache(task.clone().id)
                     .await
