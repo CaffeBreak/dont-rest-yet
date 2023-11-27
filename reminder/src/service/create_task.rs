@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::{DateTime, Timelike, Utc};
+use chrono::{DateTime, Utc};
 
 use crate::{
     domain::{
@@ -25,8 +25,10 @@ impl<T: TaskRepository> TaskService<T> {
             .await;
 
         if let Ok(task) = created_result {
-            let diff = task.remind_at.minute() as i32 - Utc::now().minute() as i32;
-            if diff >= 0 && diff <= (CONFIG.notification_cache_interval * 3).into() {
+            let diff = task.remind_at - Utc::now();
+            if diff.num_minutes() >= 0
+                && diff.num_minutes() <= (CONFIG.notification_cache_interval * 3).into()
+            {
                 NOTIFICATION_SERVICE.add_cache(task.clone()).await.unwrap();
             }
 
