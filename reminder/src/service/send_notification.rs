@@ -15,8 +15,6 @@ impl<T: TaskRepository> NotificationService<T> {
             let mut interval = time::interval(Duration::from_secs(10));
 
             loop {
-                interval.tick().await;
-
                 {
                     let mut task_cache = match self.task_cache.try_lock() {
                         Ok(locked_task) => locked_task,
@@ -30,6 +28,8 @@ impl<T: TaskRepository> NotificationService<T> {
                         yield task_cache.pop().unwrap();
                     }
                 }
+
+                interval.tick().await;
             }
         }
     }
