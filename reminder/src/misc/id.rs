@@ -37,6 +37,7 @@ impl Id {
         Id(Box::new(id))
     }
 
+    #[warn(dead_code)]
     pub fn parse(self) -> DateTime<Utc> {
         let encoded_duration = &self.0[..8];
 
@@ -47,7 +48,6 @@ impl Id {
         TIME_2000.clone() + Duration::milliseconds(duration_millisecond)
     }
 }
-
 impl Display for Id {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -61,7 +61,6 @@ impl Display for Id {
         Ok(())
     }
 }
-
 impl From<String> for Id {
     fn from(value: String) -> Self {
         let mut result: [u8; 10] = [0; 10];
@@ -122,5 +121,15 @@ mod test {
         let str = "9ldtw7e4l7".to_string();
 
         println!("{}", Id::from(str))
+    }
+
+    #[test]
+    fn compare_id() {
+        let id_1 = Id::new();
+        let id_2 = id_1.clone();
+        let id_3 = Id::new();
+
+        assert_eq!(id_1, id_2);
+        assert_ne!(id_1, id_3);
     }
 }
