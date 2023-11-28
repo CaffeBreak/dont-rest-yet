@@ -19,6 +19,7 @@ discord-py = "^2.3.2"
 betterproto = { extras = [
   "compiler",
 ], version = "^2.0.0b6", allow-prereleases = true }
+pytz = "^2023.3.post1"
 
 
 [tool.poetry.group.dev.dependencies]

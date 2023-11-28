@@ -4,10 +4,15 @@ import discord
 import asyncio
 from grpclib.client import Channel
 from pb.dry import reminder
-from discord.ui import Select, View
+from discord.ui import Select, View, Button
 from datetime import datetime, timezone
 from discord import Embed
+from typing import List
 
+    # view = SelectView()
+    # # selectMenuのoptionsを更新
+    # view.selectMenu.options = options
+    
 class SelectView(View):
   @discord.ui.select(
          cls=Select,
@@ -25,7 +30,51 @@ class SelectView(View):
     service = reminder.TaskServiceStub(channel)
     response = await service.delete_task(request)
     print(response)
+    
+  
     await interaction.response.send_message(content=f"<@{interaction.user.id}>選択されたリマインド{response.title}を削除しました")
+
+
+# class SelectViewpage(View):
+#     def __init__(self, initial_options: List[discord.SelectOption]) -> None:
+#         super().__init__()
+#         self.options = initial_options
+#         self.page = 0
+        
+    
+#     @discord.ui.button(label="次のページ", style=discord.ButtonStyle.success)
+#     async def next_page(self, button: discord.Button, interaction: discord.Interaction):
+#         self.page += 1
+#         await self.refresh_options(interaction)
+
+#     @discord.ui.button(label="前のページ", style=discord.ButtonStyle.success)
+#     async def prev_page(self, button: discord.Button, interaction: discord.Interaction):
+#         if self.page > 0:
+#             self.page -= 1
+#         await self.refresh_options(interaction)
+    
+#     async def refresh_options(self, interaction: discord.Interaction):
+#       start_idx = self.page * 25
+#       end_idx = start_idx + 25
+#       current_options = self.options[start_idx:end_idx]
+
+#         # ページの始まりに戻るボタンを追加
+#       if self.page > 0:
+#         current_options.insert(0, discord.SelectOption(label="前のページ", value="prev_page"))
+
+#         # ページの最後に次のページボタンを追加
+#       if end_idx < len(self.options):
+#         current_options.append(discord.SelectOption(label="次のページ", value="next_page"))
+
+#         # optionsを更新
+#       self.options = current_options
+#       view = SelectView()
+#       view.selectMenu.options = current_options
+#         # ユーザーへのメッセージを更新
+#       await interaction.edit_original_response(view=view)
+
+
+
 
 class Remindcmd(app_commands.Group):
   def __init__(self, name: str):
@@ -76,10 +125,17 @@ class Remindcmd(app_commands.Group):
         return
 
 
-    year = datetime.now().year
     now = datetime.now(timezone.utc)
-    if datetime(year, month, day, hour, minute, 0, tzinfo=timezone.utc) < now:
+    year = now.year
+    print(f"比較する時間は{now}")
+    # print(f"タスクを作成しようとしている日時は{year}-{month}-{day}-{hour}-{minute}")
+    task_time = datetime(year, month, day, hour, minute, 0, tzinfo=timezone.utc)
+    print(f"{task_time}")
+    if task_time < now:
+      print("作成するタスクを翌年にします")
       year += 1  # 今の時刻より前ならば、翌年にする
+      
+    print(f"タスクを作成する日時は{year}-{month}-{day}-{hour}-{minute}")
 
     Uid = interaction.user.id
     print(Uid)
@@ -93,43 +149,64 @@ class Remindcmd(app_commands.Group):
     channel = Channel(host= "reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
     response = await service.create_task(request)
+    print("タスク作成")
     print(response)
-
-      
     await interaction.response.send_message(content=f"<@{interaction.user.id}> {days}-{time}に{main}をリマインドします。 ")
     
   @app_commands.command(name="list", description="リマインドのリストを表示します")
-  async def list(self, interaction: Interaction):
+  async def list(self, interaction: Interaction, page: int):
+    """
+    
+    page  : int
+        表示するリストのページ数を指定します。 
+    """
     Uid = interaction.user.id
     request = reminder.ListTaskRequest(
-      who= str(Uid)
+      who=str(Uid)
     )
-    channel = Channel(host= "reminder", port=58946)
+    channel = Channel(host="reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
     response = await service.list_task(request)
-    
+
     tasks = response.tasks
     if not tasks:
-        await interaction.response.send_message("リマインドはありません。")
+      await interaction.response.send_message("リマインドはありません。")
+      return
+
+        # 1ページに表示するタスク数
+    tasks_per_page = 25
+
+        # ページ数を計算し、表示すべきタスクの範囲を取得
+    total_pages = (len(tasks) + tasks_per_page - 1) // tasks_per_page
+    if page < 1 or page > total_pages:
+        await interaction.response.send_message(f"無効なページ番号です。1から{total_pages}までの範囲で指定してください。")
         return
-    
-    embed = Embed(title="リマインドリスト", color=0x00ff00)
-    
-    for task in tasks:
+
+    start_idx = (page - 1) * tasks_per_page
+    end_idx = start_idx + tasks_per_page
+    current_tasks = tasks[start_idx:end_idx]
+
+    embed = Embed(title=f"リマインドリスト - ページ {page}/{total_pages}", color=0x00ff00)
+
+    for task in current_tasks:
       embed.add_field(
-          name=f"{task.title}",
-          value=f"日時: {task.remind_at.strftime('%Y-%m-%d %H:%M')}",
-          inline=False
+        name=f"{task.title}",
+        value=f"日時: {task.remind_at.strftime('%Y-%m-%d %H:%M')}",
+        inline=False
       )
 
-    # メッセージにEmbedを追加して送信
-    await interaction.response.send_message(content=f"<@{interaction.user.id}>",embed=embed)
+        # メッセージに Embed を追加して送信
+    await interaction.response.send_message(content=f"<@{interaction.user.id}>", embed=embed)
     
     
     print(response.tasks)
     
   @app_commands.command(name="delete", description="リマインドの削除を行います")
-  async def delete(self, interaction: Interaction,):
+  async def delete(self, interaction: Interaction, page: int):
+    """
+        page  : int
+        削除するタスクを選択するタスクリストのページ数を指定します。 
+    """
     Uid = interaction.user.id
     request = reminder.ListTaskRequest(
       who= str(Uid)
@@ -137,15 +214,25 @@ class Remindcmd(app_commands.Group):
     channel = Channel(host= "reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
     response = await service.list_task(request)
-    
     tasks = response.tasks
+    tasks_per_page = 25
+    
+    total_pages = (len(tasks) + tasks_per_page - 1) // tasks_per_page
+    if page < 1 or page > total_pages:
+        await interaction.response.send_message(f"無効なページ番号です。1から{total_pages}までの範囲で指定してください。")
+        return
+    
     if not tasks:
         await interaction.response.send_message(content=f"<@{interaction.user.id}>リマインドはありません。")
         return
     options = []
+    
+    start_idx = (page - 1) * tasks_per_page
+    end_idx = start_idx + tasks_per_page
+    current_tasks = tasks[start_idx:end_idx]
       
         # タスクごとにdiscord.SelectOptionオブジェクトを生成し、optionsに追加
-    for task in tasks:
+    for task in current_tasks:
       formatted_datetime = task.remind_at.strftime('%Y-%m-%d %H:%M')
       label_with_datetime = f"{task.title} - {formatted_datetime}"
       option = discord.SelectOption(label=label_with_datetime, value=task.id)
@@ -154,7 +241,8 @@ class Remindcmd(app_commands.Group):
     view = SelectView()
     # selectMenuのoptionsを更新
     view.selectMenu.options = options
-    await interaction.response.send_message("どのリマインドを削除しますか？", view=view)
+    # view = SelectViewpage(initial_options=options)
+    await interaction.response.send_message(view=view)
     await asyncio.sleep(20)
     await interaction.delete_original_response()
 
