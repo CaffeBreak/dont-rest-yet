@@ -15,7 +15,7 @@ service NotificationService {
 }
 
 message Task {
-  string id = 1
+  string id = 1;
   string title = 2;
   google.protobuf.Timestamp remindAt = 3;
   string who = 4;
