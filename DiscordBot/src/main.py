@@ -20,11 +20,11 @@ token = os.getenv("TOKEN")
 async def Notification():
   print("通知待機開始")
   channels = Channel(host= "reminder", port=58946)
-  service = reminder.NotificationServiceStub(channel=channels)
+  service = reminder.NotificationServiceStub(channels)
   async for response in service.push_notification(betterproto_lib_google_protobuf_empty=Empty()):
     print("タスク受け取り中")
     print(response)
-    channel = client.get_channel(1064809411970867264)
+    channel = client.get_channel(1178934475363713075)
     await channel.send(content= f"<@{response.who}>『{response.title}』をやりましたか？まだ休んではだめですよ")
   channels.close()
 

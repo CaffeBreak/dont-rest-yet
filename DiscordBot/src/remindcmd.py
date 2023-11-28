@@ -5,13 +5,10 @@ import asyncio
 from grpclib.client import Channel
 from pb.dry import reminder
 from discord.ui import Select, View, Button
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from discord import Embed
 from typing import List
 
-    # view = SelectView()
-    # # selectMenuのoptionsを更新
-    # view.selectMenu.options = options
     
 class SelectView(View):
   @discord.ui.select(
@@ -32,49 +29,7 @@ class SelectView(View):
     print(response)
     
   
-    await interaction.response.send_message(content=f"<@{interaction.user.id}>選択されたリマインド{response.title}を削除しました")
-
-
-# class SelectViewpage(View):
-#     def __init__(self, initial_options: List[discord.SelectOption]) -> None:
-#         super().__init__()
-#         self.options = initial_options
-#         self.page = 0
-        
-    
-#     @discord.ui.button(label="次のページ", style=discord.ButtonStyle.success)
-#     async def next_page(self, button: discord.Button, interaction: discord.Interaction):
-#         self.page += 1
-#         await self.refresh_options(interaction)
-
-#     @discord.ui.button(label="前のページ", style=discord.ButtonStyle.success)
-#     async def prev_page(self, button: discord.Button, interaction: discord.Interaction):
-#         if self.page > 0:
-#             self.page -= 1
-#         await self.refresh_options(interaction)
-    
-#     async def refresh_options(self, interaction: discord.Interaction):
-#       start_idx = self.page * 25
-#       end_idx = start_idx + 25
-#       current_options = self.options[start_idx:end_idx]
-
-#         # ページの始まりに戻るボタンを追加
-#       if self.page > 0:
-#         current_options.insert(0, discord.SelectOption(label="前のページ", value="prev_page"))
-
-#         # ページの最後に次のページボタンを追加
-#       if end_idx < len(self.options):
-#         current_options.append(discord.SelectOption(label="次のページ", value="next_page"))
-
-#         # optionsを更新
-#       self.options = current_options
-#       view = SelectView()
-#       view.selectMenu.options = current_options
-#         # ユーザーへのメッセージを更新
-#       await interaction.edit_original_response(view=view)
-
-
-
+    await interaction.response.send_message(content=f"選択されたリマインド{response.title}を削除しました")
 
 class Remindcmd(app_commands.Group):
   def __init__(self, name: str):
@@ -93,35 +48,36 @@ class Remindcmd(app_commands.Group):
     time : str
         リマインドする時間(18:00)
     """
+    await interaction.response.defer(ephemeral=True)
     try:
         month, day = map(int, days.split('/'))
         hour, minute = map(int, time.split(':'))
     except ValueError:
         if '/' not in days:
-            await interaction.response.send_message(content=f"<@{interaction.user.id}>日付の形式が正しくありません。月/日の形式で入力してください")
+            await interaction.followup.send(content=f"日付の形式が正しくありません。月/日の形式で入力してください")
             return
         if ':' not in time:
-            await interaction.response.send_message(content=f"<@{interaction.user.id}>時間の形式が正しくありません。時間:分の形式で入力してください")
+            await interaction.followup.send(content=f"時間の形式が正しくありません。時間:分の形式で入力してください")
             return
         return
 
     if not (1 <= month <= 12):
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>月の値が範囲外です。1から12の間で入力してください")
+        await interaction.followup.send(content=f"月の値が範囲外です。1から12の間で入力してください")
         return
 
     # 月ごとの最大の日付を取得
     max_day_in_month = calendar.monthrange(year=datetime.now().year, month=month)[1]
     
     if not (1 <= day <= max_day_in_month):
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>日の値が範囲外です。{month}月は1日から{max_day_in_month}日の間で入力してください")
+        await interaction.followup.send(content=f"日の値が範囲外です。{month}月は1日から{max_day_in_month}日の間で入力してください")
         return
 
     if not (0 <= hour <= 23):
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>時間の値が範囲外です。0から23の間で入力してください")
+        await interaction.followup.send(content=f"時間の値が範囲外です。0から23の間で入力してください")
         return
 
     if not (0 <= minute <= 59):
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>分の値が範囲外です。0から59の間で入力してください")
+        await interaction.followup.send(content=f"分の値が範囲外です。0から59の間で入力してください")
         return
 
 
@@ -129,12 +85,12 @@ class Remindcmd(app_commands.Group):
     year = now.year
     print(f"比較する時間は{now}")
     # print(f"タスクを作成しようとしている日時は{year}-{month}-{day}-{hour}-{minute}")
-    task_time = datetime(year, month, day, hour, minute, 0, tzinfo=timezone.utc)
+    JST = timezone(timedelta(hours=+9), "JST")
+    task_time = datetime(year, month, day, hour, minute, 0, tzinfo=JST)
     print(f"{task_time}")
     if task_time < now:
       print("作成するタスクを翌年にします")
       year += 1  # 今の時刻より前ならば、翌年にする
-      
     print(f"タスクを作成する日時は{year}-{month}-{day}-{hour}-{minute}")
 
     Uid = interaction.user.id
@@ -143,7 +99,7 @@ class Remindcmd(app_commands.Group):
     
     request = reminder.CreateTaskRequest(
       title=main,
-      remind_at=datetime(year, month, day, hour, minute, 0, tzinfo=timezone.utc),
+      remind_at=task_time.astimezone(timezone.utc),
       who=str(Uid)
     )
     channel = Channel(host= "reminder", port=58946)
@@ -151,7 +107,7 @@ class Remindcmd(app_commands.Group):
     response = await service.create_task(request)
     print("タスク作成")
     print(response)
-    await interaction.response.send_message(content=f"<@{interaction.user.id}> {days}-{time}に{main}をリマインドします。 ")
+    await interaction.followup.send(content=f" {response.remind_at.astimezone(JST)}に{response.title}をリマインドします。")#ephemeral=True→「これらはあなただけに表示されています」
     
   @app_commands.command(name="list", description="リマインドのリストを表示します")
   async def list(self, interaction: Interaction, page: int):
@@ -196,7 +152,7 @@ class Remindcmd(app_commands.Group):
       )
 
         # メッセージに Embed を追加して送信
-    await interaction.response.send_message(content=f"<@{interaction.user.id}>", embed=embed)
+    await interaction.response.send_message(content=f"", embed=embed)
     
     
     print(response.tasks)
@@ -223,7 +179,7 @@ class Remindcmd(app_commands.Group):
         return
     
     if not tasks:
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>リマインドはありません。")
+        await interaction.response.send_message(content=f"リマインドはありません。")
         return
     options = []
     
@@ -245,6 +201,8 @@ class Remindcmd(app_commands.Group):
     await interaction.response.send_message(view=view)
     await asyncio.sleep(20)
     await interaction.delete_original_response()
+    
+    
 
 
 
