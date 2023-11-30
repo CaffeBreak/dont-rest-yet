@@ -1,7 +1,7 @@
 import signal
 import sys
 from remindcmd import Remindcmd
-from discord import Intents, Client
+from discord import Intents, Client, abc
 from pb.dry import reminder
 from grpclib.client import Channel
 from discord.app_commands import CommandTree
@@ -19,13 +19,20 @@ load_dotenv(verbose=True, dotenv_path=dotenv_path)
 token = os.getenv("TOKEN")
 
 async def Notification():
-  print("通知待機開始")
+  channel = client.get_channel(1064809411970867264)
+  if not isinstance(channel, abc.Messageable):
+    print("通知の送信先がメッセージを送信可能なチャンネルではありません")
+    
+    sys.exit(1)
+  
   channels = Channel(host= "reminder", port=58946)
   service = reminder.NotificationServiceStub(channels)
+  
+  print("通知待機開始")
+
   async for response in service.push_notification(betterproto_lib_google_protobuf_empty=Empty()):
     print("タスク受け取り中")
     print(response)
-    channel = client.get_channel(1178934475363713075)
     phrases = [
     "『{title}』をやりましたか？まだ休んではだめですよ",
     "『{title}』の進捗はどうですか？",
@@ -36,6 +43,7 @@ async def Notification():
     ] 
     selected_phrase = random.choice(phrases)
     await channel.send(content= f"<@{response.who}>{selected_phrase.format(title=response.title, who=response.who)}")
+
   channels.close()
 
 def signal_handler(signum, frame):
