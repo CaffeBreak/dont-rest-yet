@@ -1,14 +1,15 @@
-from discord import app_commands, Interaction
+from discord import Color, SelectOption, app_commands, Interaction
 import calendar
 import discord
-import asyncio
 from grpclib.client import Channel
+from const import JST
 from pb.dry import reminder
-from discord.ui import Select, View, Button
+from discord.ui import Select, View
 from datetime import datetime, timedelta, timezone
 from discord import Embed
-from typing import List
+from typing import Any, Callable, Coroutine, Optional, Union
 
+from view import DeletePaginationView, PaginationView
     
 class SelectView(View):
   @discord.ui.select(
@@ -85,7 +86,6 @@ class Remindcmd(app_commands.Group):
     year = now.year
     print(f"比較する時間は{now}")
     # print(f"タスクを作成しようとしている日時は{year}-{month}-{day}-{hour}-{minute}")
-    JST = timezone(timedelta(hours=+9), "JST")
     task_time = datetime(year, month, day, hour, minute, 0, tzinfo=JST)
     print(f"{task_time}")
     if task_time < now:
@@ -110,15 +110,10 @@ class Remindcmd(app_commands.Group):
     await interaction.followup.send(content=f" {response.remind_at.astimezone(JST)}に{response.title}をリマインドします。")#ephemeral=True→「これらはあなただけに表示されています」
     
   @app_commands.command(name="list", description="リマインドのリストを表示します")
-  async def list(self, interaction: Interaction, page: int):
-    """
-    
-    page  : int
-        表示するリストのページ数を指定します。 
-    """
-    Uid = interaction.user.id
+  async def list(self, interaction: Interaction):
+    uid = interaction.user.id
     request = reminder.ListTaskRequest(
-      who=str(Uid)
+      who=str(uid)
     )
     channel = Channel(host="reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
@@ -128,83 +123,48 @@ class Remindcmd(app_commands.Group):
     if not tasks:
       await interaction.response.send_message("リマインドはありません。")
       return
+      
+    view: PaginationView[reminder.Task] = PaginationView(tasks, gen_embed, "リマインドリスト", 0x00ff00)
 
-        # 1ページに表示するタスク数
-    tasks_per_page = 25
-
-        # ページ数を計算し、表示すべきタスクの範囲を取得
-    total_pages = (len(tasks) + tasks_per_page - 1) // tasks_per_page
-    if page < 1 or page > total_pages:
-        await interaction.response.send_message(f"無効なページ番号です。1から{total_pages}までの範囲で指定してください。")
-        return
-
-    start_idx = (page - 1) * tasks_per_page
-    end_idx = start_idx + tasks_per_page
-    current_tasks = tasks[start_idx:end_idx]
-
-    embed = Embed(title=f"リマインドリスト - ページ {page}/{total_pages}", color=0x00ff00)
-
-    for task in current_tasks:
-      embed.add_field(
-        name=f"{task.title}",
-        value=f"日時: {task.remind_at.strftime('%Y-%m-%d %H:%M')}",
-        inline=False
-      )
-
-        # メッセージに Embed を追加して送信
-    await interaction.response.send_message(content=f"", embed=embed)
+    # メッセージに Embed を追加して送信
+    await interaction.response.send_message(content=f"", embed=view.get_init_embed(), view=view)
     
     
     print(response.tasks)
     
+
   @app_commands.command(name="delete", description="リマインドの削除を行います")
-  async def delete(self, interaction: Interaction, page: int):
-    """
-        page  : int
-        削除するタスクを選択するタスクリストのページ数を指定します。 
-    """
-    Uid = interaction.user.id
+  async def delete(self, interaction: Interaction):
+    uid = interaction.user.id
     request = reminder.ListTaskRequest(
-      who= str(Uid)
+      who= str(uid)
     )
-    channel = Channel(host= "reminder", port=58946)
+    channel = Channel(host="reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
     response = await service.list_task(request)
     tasks = response.tasks
-    tasks_per_page = 25
-    
-    total_pages = (len(tasks) + tasks_per_page - 1) // tasks_per_page
-    if page < 1 or page > total_pages:
-        await interaction.response.send_message(f"無効なページ番号です。1から{total_pages}までの範囲で指定してください。")
-        return
     
     if not tasks:
-        await interaction.response.send_message(content=f"リマインドはありません。")
-        return
-    options = []
-    
-    start_idx = (page - 1) * tasks_per_page
-    end_idx = start_idx + tasks_per_page
-    current_tasks = tasks[start_idx:end_idx]
+      await interaction.response.send_message(content=f"リマインドはありません。")
       
-        # タスクごとにdiscord.SelectOptionオブジェクトを生成し、optionsに追加
-    for task in current_tasks:
-      formatted_datetime = task.remind_at.strftime('%Y-%m-%d %H:%M')
-      label_with_datetime = f"{task.title} - {formatted_datetime}"
-      option = discord.SelectOption(label=label_with_datetime, value=task.id)
-      options.append(option)
-
-    view = SelectView()
-    # selectMenuのoptionsを更新
-    view.selectMenu.options = options
-    # view = SelectViewpage(initial_options=options)
-    await interaction.response.send_message(view=view)
-    await asyncio.sleep(20)
-    await interaction.delete_original_response()
+      return
     
+    gen_options: Callable[[list[reminder.Task]], list[SelectOption]] = lambda tasks: [SelectOption(label=f"{i + 1}. {task.title}", value=task.id) for i, task in enumerate(tasks)]
+    delete_task: Callable[[str], Coroutine[Any, Any, reminder.Task]] = lambda id: service.delete_task(reminder.DeleteTaskRequest(id))
+
+    view = DeletePaginationView(tasks, gen_embed, gen_options, delete_task, "リマインドリスト", 0x00ff00)
+    # optionsを更新
+    view.delete_target.options = gen_options(tasks[0:10])
+    await interaction.response.send_message(content="削除する対象の番号を選んでください", view=view, embed=view.get_init_embed())
+    # await asyncio.sleep(20)
+    # await interaction.delete_original_response()
+  
+def gen_embed(tasks: list[reminder.Task], index: int, page_max: int, title: Optional[str], color: Optional[Union[int, Color]]) -> Embed:
+    embed = Embed(title=f"{title} - Page[{index + 1}/{page_max + 1}]", color=color)
+    embed.add_field(
+      name="",
+      value=f"\n".join([f"`{str(i + 1).rjust(2, " ")}. {task.title}` - {task.remind_at.strftime('%Y-%m-%d %H:%M')}" for i, task in enumerate(tasks)]),
+      inline=False
+    )
     
-
-
-
-
-    
+    return embed
