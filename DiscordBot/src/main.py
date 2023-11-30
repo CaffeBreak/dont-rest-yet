@@ -6,6 +6,7 @@ from pb.dry import reminder
 from grpclib.client import Channel
 from discord.app_commands import CommandTree
 import os
+import random
 import asyncio
 from dotenv import load_dotenv
 from google.protobuf.empty_pb2 import Empty
@@ -25,7 +26,16 @@ async def Notification():
     print("タスク受け取り中")
     print(response)
     channel = client.get_channel(1178934475363713075)
-    await channel.send(content= f"<@{response.who}>『{response.title}』をやりましたか？まだ休んではだめですよ")
+    phrases = [
+    "『{title}』をやりましたか？まだ休んではだめですよ",
+    "『{title}』の進捗はどうですか？",
+    "お疲れ様です！『{title}』をやり遂げてくださいね",
+    "休憩は大切ですが、『{title}』も頑張ってください！",
+    "これ『{title}』やりましたか？",
+    "おい、『{title}』やれ"
+    ] 
+    selected_phrase = random.choice(phrases)
+    await channel.send(content= f"<@{response.who}>{selected_phrase.format(title=response.title, who=response.who)}")
   channels.close()
 
 def signal_handler(signum, frame):

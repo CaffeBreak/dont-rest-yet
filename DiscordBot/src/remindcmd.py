@@ -17,6 +17,7 @@ class SelectView(View):
          options=[],
   )
   async def selectMenu(self, interaction: Interaction, select: Select):
+    await interaction.response.defer(ephemeral=True)
     selected_value = ''.join(select.values)
     request = reminder.DeleteTaskRequest(
       id=str(selected_value)
@@ -28,8 +29,7 @@ class SelectView(View):
     response = await service.delete_task(request)
     print(response)
     
-  
-    await interaction.response.send_message(content=f"選択されたリマインド{response.title}を削除しました")
+    await interaction.followup.send(content=f"選択されたリマインド{response.title}を削除しました",ephemeral=True)
 
 class Remindcmd(app_commands.Group):
   def __init__(self, name: str):
@@ -116,6 +116,7 @@ class Remindcmd(app_commands.Group):
     page  : int
         表示するリストのページ数を指定します。 
     """
+    await interaction.response.defer(ephemeral=True)
     Uid = interaction.user.id
     request = reminder.ListTaskRequest(
       who=str(Uid)
@@ -152,7 +153,7 @@ class Remindcmd(app_commands.Group):
       )
 
         # メッセージに Embed を追加して送信
-    await interaction.response.send_message(content=f"", embed=embed)
+    await interaction.followup.send(content=f"", embed=embed)
     
     
     print(response.tasks)
@@ -163,6 +164,7 @@ class Remindcmd(app_commands.Group):
         page  : int
         削除するタスクを選択するタスクリストのページ数を指定します。 
     """
+    await interaction.response.defer(ephemeral=True)
     Uid = interaction.user.id
     request = reminder.ListTaskRequest(
       who= str(Uid)
@@ -198,7 +200,7 @@ class Remindcmd(app_commands.Group):
     # selectMenuのoptionsを更新
     view.selectMenu.options = options
     # view = SelectViewpage(initial_options=options)
-    await interaction.response.send_message(view=view)
+    await interaction.followup.send(view=view)
     await asyncio.sleep(20)
     await interaction.delete_original_response()
     
