@@ -54,6 +54,15 @@ class DeleteTaskRequest(betterproto.Message):
     id: str = betterproto.string_field(1)
 
 
+@dataclass(eq=False, repr=False)
+class UpdateTaskRequest(betterproto.Message):
+    id: str = betterproto.string_field(1)
+    title: Optional[str] = betterproto.string_field(2, optional=True, group="_title")
+    remind_at: Optional[datetime] = betterproto.message_field(
+        3, optional=True, group="_remindAt"
+    )
+
+
 class TaskServiceStub(betterproto.ServiceStub):
     async def create_task(
         self,
@@ -106,6 +115,23 @@ class TaskServiceStub(betterproto.ServiceStub):
             metadata=metadata,
         )
 
+    async def update_task(
+        self,
+        update_task_request: "UpdateTaskRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "Task":
+        return await self._unary_unary(
+            "/dry.reminder.TaskService/UpdateTask",
+            update_task_request,
+            Task,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
 
 class NotificationServiceStub(betterproto.ServiceStub):
     async def push_notification(
@@ -137,6 +163,9 @@ class TaskServiceBase(ServiceBase):
     async def delete_task(self, delete_task_request: "DeleteTaskRequest") -> "Task":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
 
+    async def update_task(self, update_task_request: "UpdateTaskRequest") -> "Task":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
     async def __rpc_create_task(
         self, stream: "grpclib.server.Stream[CreateTaskRequest, Task]"
     ) -> None:
@@ -158,6 +187,13 @@ class TaskServiceBase(ServiceBase):
         response = await self.delete_task(request)
         await stream.send_message(response)
 
+    async def __rpc_update_task(
+        self, stream: "grpclib.server.Stream[UpdateTaskRequest, Task]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.update_task(request)
+        await stream.send_message(response)
+
     def __mapping__(self) -> Dict[str, grpclib.const.Handler]:
         return {
             "/dry.reminder.TaskService/CreateTask": grpclib.const.Handler(
@@ -176,6 +212,12 @@ class TaskServiceBase(ServiceBase):
                 self.__rpc_delete_task,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 DeleteTaskRequest,
+                Task,
+            ),
+            "/dry.reminder.TaskService/UpdateTask": grpclib.const.Handler(
+                self.__rpc_update_task,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                UpdateTaskRequest,
                 Task,
             ),
         }

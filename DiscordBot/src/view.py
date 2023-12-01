@@ -1,11 +1,14 @@
+from cProfile import label
 import enum
 from multiprocessing import BufferTooShort
+from turtle import title, update
 from typing import Any, Callable, Coroutine, Optional, Union
 from discord import ButtonStyle, Color, Embed, Interaction, SelectOption
+import discord
 from discord.ui import View, button, Button, select, Select
 from const import JST
 
-from pb.dry.reminder import Task
+from pb.dry.reminder import Task,UpdateTaskRequest
 
 class PaginationView[T](View):
   def __init__(
@@ -99,4 +102,33 @@ class DeletePaginationView[T](PaginationView[T]):
   async def delete(self, interaction: Interaction, _: Button):
     deleted = await self.delete_task(self.target)
     
-    await interaction.response.edit_message(content=f"{deleted.title} - {deleted.remind_at.astimezone(JST)}を削除しました", embed=None, view=None)
+    await interaction.response.edit_message(content=f"{deleted.title} - {deleted.remind_at.astimezone(JST)}を削除しちゃった", embed=None, view=None)
+    
+class bottonView[T](View):
+  def __init__(
+    self,
+    update_task: Callable[[],Coroutine[Any, Any, Task]],
+    title: str,
+    yes: str,
+    no: str,
+  ):
+    super().__init__()
+    
+    self.title = title
+    self.update_task = update_task
+    
+    self.pressedY.label = yes
+    self.pressedN.label = no
+    
+  @button(custom_id="yes")
+  async def pressedY(self, interaction: Interaction, _: Button):
+    name = interaction.user.display_name
+    await interaction.response.edit_message(content=f"{name}は『{self.title}』を完了しました！", view=None)
+      
+  @button(custom_id="no")
+  async def pressedN(self, interaction: Interaction, _:Button):
+    updated = await self.update_task()
+    await interaction.response.edit_message(content=f"更新しました。{updated.remind_at.astimezone(JST).strftime('%Y-%m-%d %H:%M')}に再度通知します", view=None)
+  
+
+  

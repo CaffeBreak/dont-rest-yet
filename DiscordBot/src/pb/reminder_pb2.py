@@ -15,7 +15,7 @@ from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ereminder.proto\x12\x0c\x64ry.reminder\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\\\n\x04Task\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12,\n\x08remindAt\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0b\n\x03who\x18\x04 \x01(\t\"*\n\x05Tasks\x12!\n\x05tasks\x18\x01 \x03(\x0b\x32\x12.dry.reminder.Task\"]\n\x11\x43reateTaskRequest\x12\r\n\x05title\x18\x01 \x01(\t\x12,\n\x08remindAt\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0b\n\x03who\x18\x03 \x01(\t\"+\n\x0fListTaskRequest\x12\x10\n\x03who\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x06\n\x04_who\"\x1f\n\x11\x44\x65leteTaskRequest\x12\n\n\x02id\x18\x01 \x01(\t2\xd9\x01\n\x0bTaskService\x12\x43\n\nCreateTask\x12\x1f.dry.reminder.CreateTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x12@\n\x08ListTask\x12\x1d.dry.reminder.ListTaskRequest\x1a\x13.dry.reminder.Tasks\"\x00\x12\x43\n\nDeleteTask\x12\x1f.dry.reminder.DeleteTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x32Y\n\x13NotificationService\x12\x42\n\x10PushNotification\x12\x16.google.protobuf.Empty\x1a\x12.dry.reminder.Task\"\x00\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ereminder.proto\x12\x0c\x64ry.reminder\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\\\n\x04Task\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12,\n\x08remindAt\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0b\n\x03who\x18\x04 \x01(\t\"*\n\x05Tasks\x12!\n\x05tasks\x18\x01 \x03(\x0b\x32\x12.dry.reminder.Task\"]\n\x11\x43reateTaskRequest\x12\r\n\x05title\x18\x01 \x01(\t\x12,\n\x08remindAt\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0b\n\x03who\x18\x03 \x01(\t\"+\n\x0fListTaskRequest\x12\x10\n\x03who\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x06\n\x04_who\"\x1f\n\x11\x44\x65leteTaskRequest\x12\n\n\x02id\x18\x01 \x01(\t\"}\n\x11UpdateTaskRequest\x12\n\n\x02id\x18\x01 \x01(\t\x12\x12\n\x05title\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\x31\n\x08remindAt\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.TimestampH\x01\x88\x01\x01\x42\x08\n\x06_titleB\x0b\n\t_remindAt2\x9e\x02\n\x0bTaskService\x12\x43\n\nCreateTask\x12\x1f.dry.reminder.CreateTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x12@\n\x08ListTask\x12\x1d.dry.reminder.ListTaskRequest\x1a\x13.dry.reminder.Tasks\"\x00\x12\x43\n\nDeleteTask\x12\x1f.dry.reminder.DeleteTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x12\x43\n\nUpdateTask\x12\x1f.dry.reminder.UpdateTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x32Y\n\x13NotificationService\x12\x42\n\x10PushNotification\x12\x16.google.protobuf.Empty\x1a\x12.dry.reminder.Task\"\x00\x30\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,8 +32,10 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_LISTTASKREQUEST']._serialized_end=370
   _globals['_DELETETASKREQUEST']._serialized_start=372
   _globals['_DELETETASKREQUEST']._serialized_end=403
-  _globals['_TASKSERVICE']._serialized_start=406
-  _globals['_TASKSERVICE']._serialized_end=623
-  _globals['_NOTIFICATIONSERVICE']._serialized_start=625
-  _globals['_NOTIFICATIONSERVICE']._serialized_end=714
+  _globals['_UPDATETASKREQUEST']._serialized_start=405
+  _globals['_UPDATETASKREQUEST']._serialized_end=530
+  _globals['_TASKSERVICE']._serialized_start=533
+  _globals['_TASKSERVICE']._serialized_end=819
+  _globals['_NOTIFICATIONSERVICE']._serialized_start=821
+  _globals['_NOTIFICATIONSERVICE']._serialized_end=910
 # @@protoc_insertion_point(module_scope)

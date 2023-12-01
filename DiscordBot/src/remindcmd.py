@@ -1,40 +1,19 @@
-from discord import Color, SelectOption, app_commands, Interaction
+from discord import Color, SelectOption, app_commands, Interaction, abc
 import calendar
-import discord
 from grpclib.client import Channel
 from const import JST
 from pb.dry import reminder
-from discord.ui import Select, View
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from discord import Embed
 from typing import Any, Callable, Coroutine, Optional, Union
-
+import json
 from view import DeletePaginationView, PaginationView
     
-class SelectView(View):
-  @discord.ui.select(
-         cls=Select,
-         placeholder="リマインドを選択してください",
-         options=[],
-  )
-  async def selectMenu(self, interaction: Interaction, select: Select):
-    await interaction.response.defer(ephemeral=True)
-    selected_value = ''.join(select.values)
-    request = reminder.DeleteTaskRequest(
-      id=str(selected_value)
-    )
-    print(select)
-    print(selected_value)
-    channel = Channel(host= "reminder", port=58946)
-    service = reminder.TaskServiceStub(channel)
-    response = await service.delete_task(request)
-    print(response)
-    
-    await interaction.followup.send(content=f"選択されたリマインド{response.title}を削除しました",ephemeral=True)
 
 class Remindcmd(app_commands.Group):
   def __init__(self, name: str):
     super().__init__(name = name)
+  
     
   @app_commands.command(name="add", description="リマインドを行います")
   async def add(self, interaction: Interaction, main: str, days: str, time: str):
@@ -91,11 +70,10 @@ class Remindcmd(app_commands.Group):
     if task_time < now:
       print("作成するタスクを翌年にします")
       year += 1  # 今の時刻より前ならば、翌年にする
-    print(f"タスクを作成する日時は{year}-{month}-{day}-{hour}-{minute}")
+      task_time = datetime(year, month, day, hour, minute, 0, tzinfo=JST)
+    print(f"作成する時間は{task_time}")
 
     Uid = interaction.user.id
-    print(Uid)
-    print(type(Uid))
     
     request = reminder.CreateTaskRequest(
       title=main,
@@ -105,8 +83,7 @@ class Remindcmd(app_commands.Group):
     channel = Channel(host= "reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
     response = await service.create_task(request)
-    print("タスク作成")
-    print(response)
+    print("タスク作成完了")
     await interaction.followup.send(content=f" {response.remind_at.astimezone(JST)}に{response.title}をリマインドします。")#ephemeral=True→「これらはあなただけに表示されています」
     
   @app_commands.command(name="list", description="リマインドのリストを表示します")
@@ -121,13 +98,13 @@ class Remindcmd(app_commands.Group):
 
     tasks = response.tasks
     if not tasks:
-      await interaction.response.send_message("リマインドはありません。")
+      await interaction.response.send_message("リマインドはありません。",ephemeral=True)
       return
       
     view: PaginationView[reminder.Task] = PaginationView(tasks, gen_embed, "リマインドリスト", 0x00ff00)
 
     # メッセージに Embed を追加して送信
-    await interaction.response.send_message(content=f"", embed=view.get_init_embed(), view=view)
+    await interaction.response.send_message(content=f"", embed=view.get_init_embed(), view=view,ephemeral=True)
     
     
     print(response.tasks)
@@ -145,7 +122,7 @@ class Remindcmd(app_commands.Group):
     tasks = response.tasks
     
     if not tasks:
-      await interaction.response.send_message(content=f"リマインドはありません。")
+      await interaction.response.send_message(content=f"リマインドはありません。",ephemeral=True)
       
       return
     
@@ -155,15 +132,24 @@ class Remindcmd(app_commands.Group):
     view = DeletePaginationView(tasks, gen_embed, gen_options, delete_task, "リマインドリスト", 0x00ff00)
     # optionsを更新
     view.delete_target.options = gen_options(tasks[0:10])
-    await interaction.response.send_message(content="削除する対象の番号を選んでください", view=view, embed=view.get_init_embed())
-    # await asyncio.sleep(20)
-    # await interaction.delete_original_response()
+    await interaction.response.send_message(content="削除する対象の番号を選んでください", view=view, embed=view.get_init_embed(),ephemeral=True)
+    
+  @app_commands.command(name="channelset", description="リマインドするチャンネルを設定します" )
+  async def channelset(self, interaction: Interaction):
+    channel_id_new = interaction.channel
+    print(channel_id_new)
+    if not isinstance(channel_id_new, abc.Messageable):
+      await interaction.response.send_message("通知の送信先がメッセージを送信可能なチャンネルではありません")
+      return
+    await channel_id_new.send("リマインドの通知先を変更しました")
+    with open("config.json", "w") as file:
+      json.dump({"channel_id": channel_id_new.id}, file)
   
 def gen_embed(tasks: list[reminder.Task], index: int, page_max: int, title: Optional[str], color: Optional[Union[int, Color]]) -> Embed:
     embed = Embed(title=f"{title} - Page[{index + 1}/{page_max + 1}]", color=color)
     embed.add_field(
       name="",
-      value=f"\n".join([f"`{str(i + 1).rjust(2, " ")}. {task.title}` - {task.remind_at.strftime('%Y-%m-%d %H:%M')}" for i, task in enumerate(tasks)]),
+      value=f"\n".join([f"`{str(i + 1).rjust(2, " ")}. {task.title}` - {task.remind_at.astimezone(JST).strftime('%Y-%m-%d %H:%M')}" for i, task in enumerate(tasks)]),
       inline=False
     )
     

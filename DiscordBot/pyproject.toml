@@ -19,6 +19,7 @@ betterproto = { extras = [
   "compiler",
 ], version = "^2.0.0b6", allow-prereleases = true }
 pytz = "^2023.3.post1"
+schedule = "^1.2.1"
 
 
 [tool.poetry.group.dev.dependencies]

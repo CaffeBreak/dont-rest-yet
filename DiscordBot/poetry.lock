@@ -800,13 +800,13 @@ files = [
 
 [[package]]
 name = "pyright"
-version = "1.1.337"
+version = "1.1.338"
 description = "Command line wrapper for pyright"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyright-1.1.337-py3-none-any.whl", hash = "sha256:8cbd4ef71797258f816a8393a758c9c91213479f472082d0e3a735ef7ab5f65a"},
-    {file = "pyright-1.1.337.tar.gz", hash = "sha256:81d81f839d1750385390c4c4a7b84b062ece2f9a078f87055d4d2a5914ef2a08"},
+    {file = "pyright-1.1.338-py3-none-any.whl", hash = "sha256:28231a3c81ec738b3e1b02489eea5b67fb425a9be0717a32b2e075984623b3ff"},
+    {file = "pyright-1.1.338.tar.gz", hash = "sha256:132aa74d2d58d4d27a5b922672b5b4d2be7f3931e7276a2b231d15af6e45daad"},
 ]
 
 [package.dependencies]
@@ -853,6 +853,17 @@ python-versions = "*"
 files = [
     {file = "pytz-2023.3.post1-py2.py3-none-any.whl", hash = "sha256:ce42d816b81b68506614c11e8937d3aa9e41007ceb50bfdcb0749b921bf646c7"},
     {file = "pytz-2023.3.post1.tar.gz", hash = "sha256:7b4fddbeb94a1eba4b557da24f19fdf9db575192544270a9101d8509f9f43d7b"},
+]
+
+[[package]]
+name = "schedule"
+version = "1.2.1"
+description = "Job scheduling for humans."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "schedule-1.2.1-py2.py3-none-any.whl", hash = "sha256:14cdeb083a596aa1de6dc77639a1b2ac8bf6eaafa82b1c9279d3612823063d01"},
+    {file = "schedule-1.2.1.tar.gz", hash = "sha256:843bc0538b99c93f02b8b50e3e39886c06f2d003b24f48e1aa4cadfa3f341279"},
 ]
 
 [[package]]
@@ -999,4 +1010,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "17f4162a893557c548c45a6e3c6843009b81ceb3228497382a69eb46e590a72a"
+content-hash = "3cbceb399bcd23f3488d1053a9ec2c6f3f60c823ef0fa56303aea4236d63f14a"
