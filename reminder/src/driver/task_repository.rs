@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
-use surrealdb::sql::Thing;
+use surrealdb::{engine::any::Any, method::Update, sql::Thing};
 
 use crate::{
     domain::{
@@ -42,6 +42,22 @@ impl Into<Task> for TaskRecord {
             who: User { id: self.who },
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct TaskUpdate {
+    title: String,
+    remind_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct TaskTitleUpdate {
+    title: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct TaskRemindAtUpdate {
+    remind_at: DateTime<Utc>,
 }
 
 pub struct TaskRepositorySurrealDriver;
@@ -141,5 +157,26 @@ impl TaskRepository for TaskRepositorySurrealDriver {
         log!("DEBUG" -> format!("Deleted: {:?}", deleted).dimmed());
 
         Ok(deleted.into())
+    }
+
+    async fn update(
+        &self,
+        id: Id,
+        title: Option<String>,
+        remind_at: Option<DateTime<Utc>>,
+    ) -> Result<Task, ReminderError> {
+        let update: Update<'_, Any, Option<TaskRecord>> = DB.update(("task", id.to_string()));
+
+        let updated = match (title, remind_at) {
+            (None, None) => todo!(),
+            (None, Some(remind_at)) => update.merge(TaskRemindAtUpdate { remind_at }).await,
+            (Some(title), None) => update.merge(TaskTitleUpdate { title }).await,
+            (Some(title), Some(remind_at)) => update.merge(TaskUpdate { title, remind_at }).await,
+        }
+        .map_err(|error| ReminderError::DBOperationError(error))?
+        .unwrap();
+        log!("DEBUG" -> format!("Updated: {:?}", updated).dimmed());
+
+        Ok(updated.into())
     }
 }

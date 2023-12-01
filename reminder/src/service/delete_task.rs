@@ -9,7 +9,7 @@ use chrono::Utc;
 use super::service::TaskService;
 
 impl<T: TaskRepository> TaskService<T> {
-    pub async fn delete_task(&self, id: Id) -> Result<Task, ReminderError> {
+    pub(crate) async fn delete_task(&self, id: Id) -> Result<Task, ReminderError> {
         let target = self.task_repo.get(id.clone()).await?;
         let delete_result = self.task_repo.delete(target.id).await;
 
@@ -18,10 +18,13 @@ impl<T: TaskRepository> TaskService<T> {
             if diff.num_minutes() >= 0
                 && diff.num_minutes() <= (CONFIG.notification_cache_interval * 3).into()
             {
-                NOTIFICATION_SERVICE
-                    .delete_cache(task.clone().id)
-                    .await
-                    .unwrap();
+                let cache_task = task.clone();
+                tokio::spawn(async move {
+                    NOTIFICATION_SERVICE
+                        .delete_cache(cache_task.id)
+                        .await
+                        .unwrap();
+                });
             }
 
             Ok(task)

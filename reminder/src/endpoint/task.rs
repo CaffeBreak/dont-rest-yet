@@ -5,7 +5,7 @@ use crate::{
     domain::{self, user::User},
     driver::grpc_api::reminder::{
         task_service_server::TaskService, CreateTaskRequest, DeleteTaskRequest, ListTaskRequest,
-        Task, Tasks,
+        Task, Tasks, UpdateTaskRequest,
     },
     init::TASK_SERVICE,
     log,
@@ -116,10 +116,59 @@ impl TaskService for TaskSrv {
             Ok(deleted) => {
                 log!("gRPC" -> format!(">>> Task deleted.").cyan());
                 log!("DEBUG" -> format!("Deleted: {:?}", deleted).dimmed());
+
                 Ok(Response::new(deleted.into()))
             }
             Err(error) => {
                 log!("ERROR" -> format!("Delete task falied").bold().red());
+                log!("ERROR" -> format!("Reason: {}", error.to_string()).bold().red());
+                let error = match error {
+                    ReminderError::DBOperationError(error) => Status::internal(error.to_string()),
+                    ReminderError::TaskNotFound { id } => {
+                        Status::not_found(format!("Task(id: {}) is not found.", id))
+                    }
+                };
+
+                Err(error)
+            }
+        }
+    }
+    async fn update_task(
+        &self,
+        request: Request<UpdateTaskRequest>,
+    ) -> Result<Response<Task>, Status> {
+        let request = request.into_inner();
+        log!("gRPC" -> "<<< Update task request received.".cyan());
+
+        // パラメータのパース
+        let id = if !request.id.is_empty() {
+            Id::from(request.id)
+        } else {
+            return invalid_argument_error("ID is not found.");
+        };
+
+        let updated_result = TASK_SERVICE
+            .update_task(
+                id,
+                request.title,
+                match request.remind_at {
+                    Some(remind_at) => {
+                        DateTime::<Utc>::from_timestamp(remind_at.seconds, remind_at.nanos as u32)
+                    }
+                    None => None,
+                },
+            )
+            .await;
+
+        match updated_result {
+            Ok(updated) => {
+                log!("gRPC" -> format!(">>> Task updated.").cyan());
+                log!("DEBUG" -> format!("Updated: {:?}", updated).dimmed());
+
+                Ok(Response::new(updated.into()))
+            }
+            Err(error) => {
+                log!("ERROR" -> format!("Update task falied").bold().red());
                 log!("ERROR" -> format!("Reason: {}", error.to_string()).bold().red());
                 let error = match error {
                     ReminderError::DBOperationError(error) => Status::internal(error.to_string()),
