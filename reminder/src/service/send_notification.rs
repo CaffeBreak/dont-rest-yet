@@ -19,7 +19,7 @@ impl<T: TaskRepository> NotificationService<T> {
                 if task_cache.len() > 0 {
                     let mut delete_flags: Vec<bool> = vec![];
                     for (i, task) in task_cache.iter().enumerate() {
-                        delete_flags.push((task.remind_at - Utc::now()).num_seconds() < 30);
+                        delete_flags.push((task.remind_at - Utc::now()).num_seconds() < 0);
                         if delete_flags[i] {
                             yield task.clone();
                         }
