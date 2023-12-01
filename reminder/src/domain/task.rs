@@ -12,11 +12,11 @@ use crate::{
 use super::user::User;
 
 #[derive(Debug, Clone)]
-pub struct Task {
-    pub id: Id,
-    pub title: String,
-    pub remind_at: DateTime<Utc>,
-    pub who: User,
+pub(crate) struct Task {
+    pub(crate) id: Id,
+    pub(crate) title: String,
+    pub(crate) remind_at: DateTime<Utc>,
+    pub(crate) who: User,
 }
 impl From<grpc_api::reminder::Task> for Task {
     fn from(value: grpc_api::reminder::Task) -> Self {
@@ -62,4 +62,10 @@ pub trait TaskRepository {
         duration: Option<Duration>,
     ) -> impl Future<Output = Result<Vec<Task>, ReminderError>> + Send;
     fn delete(&self, id: Id) -> impl Future<Output = Result<Task, ReminderError>> + Send;
+    fn update(
+        &self,
+        id: Id,
+        title: Option<String>,
+        remind_at: Option<DateTime<Utc>>,
+    ) -> impl Future<Output = Result<Task, ReminderError>> + Send;
 }

@@ -10,7 +10,7 @@ use anyhow::Result;
 use super::service::TaskService;
 
 impl<T: TaskRepository> TaskService<T> {
-    pub async fn list_task(&self, who: Option<User>) -> Result<Vec<Task>, ReminderError> {
+    pub(crate) async fn list_task(&self, who: Option<User>) -> Result<Vec<Task>, ReminderError> {
         let list_result = self.task_repo.list(who, None).await;
 
         list_result

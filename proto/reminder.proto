@@ -9,6 +9,7 @@ service TaskService {
   rpc CreateTask (CreateTaskRequest) returns (Task) {}
   rpc ListTask (ListTaskRequest) returns (Tasks) {}
   rpc DeleteTask (DeleteTaskRequest) returns (Task) {}
+  rpc UpdateTask (UpdateTaskRequest) returns (Task) {}
 }
 service NotificationService {
   rpc PushNotification (google.protobuf.Empty) returns (stream Task) {}
@@ -32,7 +33,11 @@ message CreateTaskRequest {
 message ListTaskRequest {
   optional string who = 1;
 }
-
 message DeleteTaskRequest {
   string id = 1;
+}
+message UpdateTaskRequest {
+  string id = 1;
+  optional string title = 2;
+  optional google.protobuf.Timestamp remindAt = 3;
 }

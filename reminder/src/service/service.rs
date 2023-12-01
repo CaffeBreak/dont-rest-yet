@@ -41,4 +41,25 @@ impl<T: TaskRepository> NotificationService<T> {
 
         Ok(())
     }
+
+    pub(crate) async fn update_cache(&self, task: Task) -> Result<()> {
+        let mut updated = false;
+        let mut locked_cache = self.task_cache.lock().await;
+        *locked_cache = locked_cache
+            .iter()
+            .map(|cache| {
+                if cache.id == task.id {
+                    updated = true;
+                    task.clone()
+                } else {
+                    (*cache).clone()
+                }
+            })
+            .collect();
+        if !updated {
+            locked_cache.push(task);
+        }
+
+        Ok(())
+    }
 }

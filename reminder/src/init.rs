@@ -56,6 +56,7 @@ pub(crate) async fn init_db() -> Result<()> {
     DB.connect(CONFIG.db_uri.to_string())
         .await
         .context(format!("Failed to connect DB with URI: {}.", CONFIG.db_uri))?;
+    // ここ、クレデンシャルを決め打ちしてるの良くないのでいずれ直す
     DB.signin(Root {
         username: "root",
         password: "root",
@@ -82,6 +83,7 @@ pub(crate) async fn init_notification_cache() -> Result<()> {
     tokio::spawn(async move {
         log!("INFO" -> "Start cache refreshing...".yellow());
 
+        // キャッシュはキャッシュ取得周期の3倍の期間で取得する
         let tasks = match NOTIFICATION_SERVICE
             .task_repo
             .list(
