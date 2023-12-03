@@ -9,7 +9,7 @@ ARG UID=1000
 ARG GID=1000
 ARG USERNAME=developer
 
-WORKDIR /reminder
+WORKDIR /dry/reminder
 
 COPY --from=git /usr/bin/git /usr/bin
 COPY --from=grpcurl /bin/grpcurl /bin

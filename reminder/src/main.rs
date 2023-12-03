@@ -5,13 +5,15 @@ use colored::Colorize;
 use driver::grpc_api::serve;
 use init::init_db;
 
-pub mod config;
-pub mod domain;
-pub mod driver;
-pub mod endpoint;
-pub mod init;
-pub mod misc;
-pub mod service;
+use crate::init::init_notification_cache;
+
+mod config;
+mod domain;
+mod driver;
+mod endpoint;
+mod init;
+mod misc;
+mod service;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,8 +26,12 @@ async fn main() -> Result<()> {
         r"| |_| |  _ < | |   |  _ <  __/ | | | | | | | | | (_| |  __/ |   ".bold().magenta(),
         r"|____/|_| \_\|_|   |_| \_\___|_| |_| |_|_|_| |_|\__,_|\___|_|   ".bold().magenta(),
     );
+    log!("BOOT" -> "Start initialize...".green());
 
     init_db().await?;
+    init_notification_cache().await?;
+
+    log!("BOOT" -> "Initialize is finished".green());
 
     serve().await?;
 
