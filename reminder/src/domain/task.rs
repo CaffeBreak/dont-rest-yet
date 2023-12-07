@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use anyhow::Result;
 use chrono::{DateTime, Duration, Utc};
 use prost_types::Timestamp;
@@ -9,29 +7,14 @@ use crate::{
     misc::{error::ReminderError, id::Id},
 };
 
-use super::user::User;
+use super::user::UserIdentifier;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Task {
     pub(crate) id: Id,
     pub(crate) title: String,
     pub(crate) remind_at: DateTime<Utc>,
-    pub(crate) who: User,
-}
-impl From<grpc_api::reminder::Task> for Task {
-    fn from(value: grpc_api::reminder::Task) -> Self {
-        let remind_at = value.remind_at.unwrap();
-        Self {
-            id: Id::from(value.id),
-            title: value.title,
-            remind_at: DateTime::<Utc>::from_timestamp(
-                remind_at.seconds,
-                remind_at.nanos.try_into().unwrap(),
-            )
-            .unwrap(),
-            who: User { id: value.who },
-        }
-    }
+    pub(crate) who: UserIdentifier,
 }
 impl Into<grpc_api::reminder::Task> for Task {
     fn into(self) -> grpc_api::reminder::Task {
@@ -42,30 +25,30 @@ impl Into<grpc_api::reminder::Task> for Task {
             id: self.id.to_string(),
             title: self.title,
             remind_at: Some(Timestamp { seconds, nanos }),
-            who: self.who.id,
+            who: Some(self.who.into()),
         }
     }
 }
 
-pub trait TaskRepository {
-    fn create(
+pub(crate) trait TaskRepository {
+    async fn create(
         &self,
         id: Id,
         title: String,
         remind_at: DateTime<Utc>,
-        who: User,
-    ) -> impl Future<Output = Result<Task, ReminderError>> + Send;
-    fn get(&self, id: Id) -> impl Future<Output = Result<Task, ReminderError>> + Send;
-    fn list(
+        who: UserIdentifier,
+    ) -> Result<Task, ReminderError>;
+    async fn get(&self, id: Id) -> Result<Task, ReminderError>;
+    async fn list(
         &self,
-        who: Option<User>,
+        who: Option<UserIdentifier>,
         duration: Option<Duration>,
-    ) -> impl Future<Output = Result<Vec<Task>, ReminderError>> + Send;
-    fn delete(&self, id: Id) -> impl Future<Output = Result<Task, ReminderError>> + Send;
-    fn update(
+    ) -> Result<Vec<Task>, ReminderError>;
+    async fn delete(&self, id: Id) -> Result<Task, ReminderError>;
+    async fn update(
         &self,
         id: Id,
         title: Option<String>,
         remind_at: Option<DateTime<Utc>>,
-    ) -> impl Future<Output = Result<Task, ReminderError>> + Send;
+    ) -> Result<Task, ReminderError>;
 }

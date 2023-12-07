@@ -2,11 +2,12 @@ use chrono::{DateTime, Utc};
 use tonic::{Request, Response, Status};
 
 use crate::{
-    domain::{self, user::User},
+    domain,
     driver::grpc_api::reminder::{
-        task_service_server::TaskService, CreateTaskRequest, DeleteTaskRequest, ListTaskRequest,
-        Task, Tasks, UpdateTaskRequest,
+        task_service_server::TaskService, CreateTaskRequest, DeleteTaskRequest, GetTaskRequest,
+        ListTaskRequest, Task, Tasks, UpdateTaskRequest,
     },
+    endpoint::invalid_argument_error,
     init::TASK_SERVICE,
     log,
     misc::{error::ReminderError, id::Id},
@@ -30,10 +31,17 @@ impl TaskService for TaskSrv {
         } else {
             return invalid_argument_error("Title is not found.");
         };
-        let who = if request.who.is_empty() {
-            return invalid_argument_error("Who is not found.");
+        let who = if let Some(who) = request.who {
+            if who.client.is_empty() {
+                return invalid_argument_error("Client is not found.");
+            }
+            if who.identifier.is_empty() {
+                return invalid_argument_error("Identifier is not found.");
+            }
+
+            who
         } else {
-            request.who
+            return invalid_argument_error("Who is not found.");
         };
         let remind_at = match request.remind_at {
             Some(remind_at) => remind_at,
@@ -44,7 +52,7 @@ impl TaskService for TaskSrv {
             .create_task(
                 title,
                 DateTime::<Utc>::from_timestamp(remind_at.seconds, remind_at.nanos as u32).unwrap(),
-                User { id: who },
+                who.into(),
             )
             .await;
 
@@ -63,6 +71,26 @@ impl TaskService for TaskSrv {
             }
         }
     }
+    async fn get_task(&self, request: Request<GetTaskRequest>) -> Result<Response<Task>, Status> {
+        let request = request.into_inner();
+        log!("gRPC" -> format!("<<< Get task request received.").cyan());
+
+        let get_result = TASK_SERVICE.get_task(Id::from(request.id)).await;
+
+        match get_result {
+            Ok(task) => {
+                log!("gRPC" -> format!(">>> Task Got.").cyan());
+                log!("DEBUG" -> format!("Got: {:?}", task).dimmed());
+                Ok(Response::new(task.into()))
+            }
+            Err(error) => {
+                log!("ERROR" -> format!("Get task falied").bold().red());
+                log!("ERROR" -> format!("Reason: {}", error.to_string()).bold().red());
+
+                Err(Status::internal(error.to_string()))
+            }
+        }
+    }
     async fn list_task(
         &self,
         request: Request<ListTaskRequest>,
@@ -71,10 +99,7 @@ impl TaskService for TaskSrv {
         log!("gRPC" -> format!("<<< List task request received.").cyan());
 
         let list_result = TASK_SERVICE
-            .list_task(match request.who {
-                Some(who) => Some(User { id: who }),
-                None => None,
-            })
+            .list_task(request.who.map(|user| user.into()))
             .await;
 
         match list_result {
@@ -127,6 +152,7 @@ impl TaskService for TaskSrv {
                     ReminderError::TaskNotFound { id } => {
                         Status::not_found(format!("Task(id: {}) is not found.", id))
                     }
+                    _ => unreachable!(),
                 };
 
                 Err(error)
@@ -175,18 +201,11 @@ impl TaskService for TaskSrv {
                     ReminderError::TaskNotFound { id } => {
                         Status::not_found(format!("Task(id: {}) is not found.", id))
                     }
+                    _ => unreachable!(),
                 };
 
                 Err(error)
             }
         }
     }
-}
-
-fn invalid_argument_error<T>(msg: impl Into<String> + std::marker::Copy) -> Result<T, Status> {
-    log!("ERROR" -> format!("Invalid gRPC request arguments").bold().red());
-    log!("ERROR" -> format!("Reason: {}", msg.into()).bold().red());
-    log!("gRPC" -> ">>> Error InvalidArgument".cyan());
-
-    Err::<T, Status>(Status::invalid_argument(msg))
 }
