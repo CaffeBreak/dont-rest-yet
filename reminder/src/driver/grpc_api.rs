@@ -3,8 +3,8 @@ use std::net::SocketAddr;
 use tonic::transport::Server;
 
 use crate::{
-    driver::grpc_api::reminder::FILE_DESCRIPTOR_SET,
-    endpoint::{notification::NotificationSrv, task::TaskSrv},
+    driver::grpc_api::reminder::{user_service_server::UserServiceServer, FILE_DESCRIPTOR_SET},
+    endpoint::{notification::NotificationSrv, task::TaskSrv, user::UserSrv},
     init::CONFIG,
     log,
 };
@@ -31,6 +31,7 @@ pub async fn serve() -> anyhow::Result<()> {
     Server::builder()
         .add_service(reflection_service)
         .add_service(TaskServiceServer::new(TaskSrv))
+        .add_service(UserServiceServer::new(UserSrv))
         .add_service(NotificationServiceServer::new(NotificationSrv))
         .serve(addr)
         .await?;

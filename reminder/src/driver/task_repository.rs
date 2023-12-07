@@ -6,41 +6,47 @@ use surrealdb::{engine::any::Any, method::Update, sql::Thing};
 use crate::{
     domain::{
         task::{Task, TaskRepository},
-        user::User,
+        user::UserIdentifier,
     },
     init::DB,
     log,
     misc::{error::ReminderError, id::Id},
 };
 
+use super::user_repository::UserRecord;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct TaskRecord {
+pub(super) struct TaskRecord {
     id: Thing,
     title: String,
     remind_at: DateTime<Utc>,
-    who: String,
+    who: Thing,
 }
 impl From<Task> for TaskRecord {
     fn from(value: Task) -> Self {
         Self {
-            id: Thing {
-                tb: "task".to_string(),
-                id: surrealdb::sql::Id::String(value.id.to_string()),
-            },
+            id: Thing::from(("task".to_string(), value.id.to_string())),
             title: value.title,
             remind_at: value.remind_at,
-            who: value.who.id,
+            who: Thing::from((
+                "user".to_string(),
+                Into::<surrealdb::sql::Id>::into(value.who),
+            )),
         }
     }
 }
-impl Into<Task> for TaskRecord {
-    fn into(self) -> Task {
-        Task {
-            id: Id::from(self.id.id.to_string()),
+impl TryInto<Task> for TaskRecord {
+    type Error = ReminderError;
+
+    fn try_into(self) -> Result<Task, Self::Error> {
+        let user_identifier = self.who.id.try_into().unwrap();
+
+        Ok(Task {
+            id: self.id.id.to_string().into(),
             title: self.title,
             remind_at: self.remind_at,
-            who: User { id: self.who },
-        }
+            who: user_identifier,
+        })
     }
 }
 
@@ -60,7 +66,25 @@ struct TaskRemindAtUpdate {
     remind_at: DateTime<Utc>,
 }
 
-pub struct TaskRepositorySurrealDriver;
+#[derive(Debug, Deserialize)]
+struct TaskRecordWithUser {
+    id: Thing,
+    title: String,
+    remind_at: DateTime<Utc>,
+    who: UserRecord,
+}
+impl Into<Task> for TaskRecordWithUser {
+    fn into(self) -> Task {
+        Task {
+            id: Id::from(self.id.id.to_string()),
+            title: self.title,
+            remind_at: self.remind_at,
+            who: self.who.id.id.try_into().unwrap(),
+        }
+    }
+}
+
+pub(crate) struct TaskRepositorySurrealDriver;
 
 impl TaskRepository for TaskRepositorySurrealDriver {
     async fn create(
@@ -68,32 +92,38 @@ impl TaskRepository for TaskRepositorySurrealDriver {
         id: Id,
         title: String,
         remind_at: DateTime<Utc>,
-        who: User,
+        who: UserIdentifier,
     ) -> Result<Task, ReminderError> {
-        let mut created: Vec<TaskRecord> = DB
+        let created: TaskRecord = DB
             .create("task")
             .content(TaskRecord {
-                id: Thing {
-                    tb: "task".to_string(),
-                    id: surrealdb::sql::Id::String(id.to_string()),
-                },
+                id: Thing::from(("task".to_string(), id.to_string())),
                 title: title.clone(),
                 remind_at,
-                who: who.id.clone(),
+                who: Thing::from(("user".to_string(), Into::<surrealdb::sql::Id>::into(who))),
             })
             .await
-            .map_err(|error| ReminderError::DBOperationError(error))?;
+            .map_err(|error| ReminderError::DBOperationError(error))?
+            .pop()
+            .unwrap();
+        // let created = self.get(created.id.id.to_string().into()).await?;
         log!("DEBUG" -> format!("Created: {:?}", created).dimmed());
 
-        Ok(created.pop().unwrap().into())
+        created.try_into()
     }
 
     async fn get(&self, id: Id) -> Result<Task, ReminderError> {
-        let task: TaskRecord = DB
-            .select(("task", id.to_string()))
+        let query = format!(
+            "select * from {} fetch who",
+            Thing::from(("task".to_string(), id.to_string()))
+        );
+        let task: Option<TaskRecordWithUser> = DB
+            .query(query)
             .await
             .map_err(|error| ReminderError::DBOperationError(error))?
-            .ok_or(ReminderError::TaskNotFound { id: id.to_string() })?;
+            .take(0)
+            .map_err(|error| ReminderError::DBOperationError(error))?;
+        let task = task.ok_or(ReminderError::TaskNotFound { id: id.to_string() })?;
         log!("DEBUG" -> format!("Got: {:?}", task).dimmed());
 
         Ok(task.into())
@@ -101,51 +131,54 @@ impl TaskRepository for TaskRepositorySurrealDriver {
 
     async fn list(
         &self,
-        who: Option<User>,
+        who: Option<UserIdentifier>,
         duration: Option<Duration>,
     ) -> Result<Vec<Task>, ReminderError> {
         let query = "select * from task".to_string();
         let query = match (who, duration) {
-            (None, None) => DB.query(query),
+            (None, None) => query,
             (None, Some(duration)) => {
                 let dt_now = Utc::now();
                 let end_time = dt_now + duration;
 
-                DB.query(format!(
-                    "{} where remind_at >= $dt_now && remind_at <= $duration",
-                    query
-                ))
-                .bind(("dt_now", dt_now))
-                .bind(("duration", end_time))
+                format!(
+                    "{} where \"{}\" <= remind_at && remind_at <= \"{}\"",
+                    query,
+                    dt_now.to_rfc3339(),
+                    end_time.to_rfc3339()
+                )
             }
-            (Some(who), None) => DB
-                .query(format!("{} where who = $who", query))
-                .bind(("who", who.id)),
+            (Some(who), None) => {
+                format!(
+                    "{} where who = {}",
+                    query,
+                    Thing::from(("user".to_string(), Into::<surrealdb::sql::Id>::into(who)))
+                )
+            }
             (Some(who), Some(duration)) => {
                 let dt_now = Utc::now();
                 let end_time = dt_now + duration;
 
-                DB.query(format!(
-                    "{} where remind_at >= $dt_now && remind_at <= $duration && who = $who",
-                    query
-                ))
-                .bind(("dt_now", dt_now))
-                .bind(("duration", end_time))
-                .bind(("who", who.id))
+                format!(
+                    "{} where \"{}\" <= remind_at && remind_at <= \"{}\" && who == \"{}\"",
+                    query,
+                    dt_now.to_rfc3339(),
+                    end_time.to_rfc3339(),
+                    Thing::from(("user".to_string(), Into::<surrealdb::sql::Id>::into(who))),
+                )
             }
         };
+        let query = format!("{} fetch who", query);
 
-        let list: Vec<TaskRecord> = query
+        let list: Vec<TaskRecordWithUser> = DB
+            .query(query)
             .await
             .map_err(|error| ReminderError::DBOperationError(error))?
             .take(0)
-            .unwrap();
+            .map_err(|error| ReminderError::DBOperationError(error))?;
         log!("DEBUG" -> format!("Listed: {:?}", list).dimmed());
 
-        Ok(list
-            .iter()
-            .map(|task| TaskRecord::into(task.clone()))
-            .collect())
+        Ok(list.into_iter().map(|task| task.into()).collect())
     }
 
     async fn delete(&self, id: Id) -> Result<Task, ReminderError> {
@@ -156,7 +189,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             .unwrap();
         log!("DEBUG" -> format!("Deleted: {:?}", deleted).dimmed());
 
-        Ok(deleted.into())
+        deleted.try_into()
     }
 
     async fn update(
@@ -175,8 +208,9 @@ impl TaskRepository for TaskRepositorySurrealDriver {
         }
         .map_err(|error| ReminderError::DBOperationError(error))?
         .unwrap();
+        // let updated = self.get(updated.id.id.to_string().into()).await?;
         log!("DEBUG" -> format!("Updated: {:?}", updated).dimmed());
 
-        Ok(updated.into())
+        updated.try_into()
     }
 }
