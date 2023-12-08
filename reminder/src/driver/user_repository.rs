@@ -112,6 +112,7 @@ impl UserRepository for UserRepositorySurrealDriver {
             .await
             .map_err(|error| ReminderError::DBOperationError(error))?
             .unwrap();
+
         log!("DEBUG" -> format!("Created: {:?}", created).dimmed());
 
         Ok(created.into())
@@ -132,6 +133,7 @@ impl UserRepository for UserRepositorySurrealDriver {
             .take(0)
             .map_err(|error| ReminderError::DBOperationError(error))?;
         let user = user.ok_or(ReminderError::UserNotFound { id: id.to_string() })?;
+
         log!("DEBUG" -> format!("Got: {:?}", user).dimmed());
 
         Ok(user.into())
@@ -151,6 +153,7 @@ impl UserRepository for UserRepositorySurrealDriver {
             .map_err(|error| ReminderError::DBOperationError(error))?
             .take(0)
             .map_err(|error| ReminderError::DBOperationError(error))?;
+
         log!("DEBUG" -> format!("Listed: {:?}", list).dimmed());
 
         Ok(list.into_iter().map(|user| user.into()).collect())
@@ -162,6 +165,7 @@ impl UserRepository for UserRepositorySurrealDriver {
             .await
             .map_err(|error| ReminderError::DBOperationError(error))?
             .unwrap();
+
         log!("DEBUG" -> format!("Deleted: {:?}", deleted).dimmed());
 
         Ok(deleted.into())

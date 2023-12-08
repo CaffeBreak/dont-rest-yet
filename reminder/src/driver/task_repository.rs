@@ -106,7 +106,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             .map_err(|error| ReminderError::DBOperationError(error))?
             .pop()
             .unwrap();
-        // let created = self.get(created.id.id.to_string().into()).await?;
+
         log!("DEBUG" -> format!("Created: {:?}", created).dimmed());
 
         created.try_into()
@@ -117,6 +117,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             "select * from {} fetch who",
             Thing::from(("task".to_string(), id.to_string()))
         );
+
         let task: Option<TaskRecordWithUser> = DB
             .query(query)
             .await
@@ -124,6 +125,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             .take(0)
             .map_err(|error| ReminderError::DBOperationError(error))?;
         let task = task.ok_or(ReminderError::TaskNotFound { id: id.to_string() })?;
+
         log!("DEBUG" -> format!("Got: {:?}", task).dimmed());
 
         Ok(task.into())
@@ -176,6 +178,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             .map_err(|error| ReminderError::DBOperationError(error))?
             .take(0)
             .map_err(|error| ReminderError::DBOperationError(error))?;
+
         log!("DEBUG" -> format!("Listed: {:?}", list).dimmed());
 
         Ok(list.into_iter().map(|task| task.into()).collect())
@@ -187,6 +190,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
             .await
             .map_err(|error| ReminderError::DBOperationError(error))?
             .unwrap();
+
         log!("DEBUG" -> format!("Deleted: {:?}", deleted).dimmed());
 
         deleted.try_into()
@@ -208,7 +212,7 @@ impl TaskRepository for TaskRepositorySurrealDriver {
         }
         .map_err(|error| ReminderError::DBOperationError(error))?
         .unwrap();
-        // let updated = self.get(updated.id.id.to_string().into()).await?;
+
         log!("DEBUG" -> format!("Updated: {:?}", updated).dimmed());
 
         updated.try_into()

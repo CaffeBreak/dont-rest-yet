@@ -5,9 +5,10 @@ use chrono::Utc;
 use tokio::time;
 use tokio_stream::Stream;
 
-use crate::domain::task::{Task, TaskRepository};
-
-use super::service::NotificationService;
+use crate::{
+    domain::task::{Task, TaskRepository},
+    service::service::NotificationService,
+};
 
 impl<T: TaskRepository> NotificationService<T> {
     pub(crate) fn send_notification(&self) -> impl Stream<Item = Task> + '_ {
