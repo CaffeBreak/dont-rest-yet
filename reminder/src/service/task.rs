@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use crate::{
     domain::{
         task::{Task, TaskRepository},
-        user::UserIdentifier,
+        user::{UserIdentifier, UserRepository},
     },
     init::{CONFIG, NOTIFICATION_SERVICE},
     misc::{error::ReminderError, id::Id},
@@ -12,16 +12,29 @@ use crate::{
 
 use super::service::TaskService;
 
-impl<T: TaskRepository> TaskService<T> {
+impl<T: TaskRepository, U: UserRepository> TaskService<T, U> {
     pub(crate) async fn create_task(
         &self,
         title: String,
         remind_at: DateTime<Utc>,
         who: UserIdentifier,
     ) -> Result<Task, ReminderError> {
+        let user_result = self.user_repo.get(who.clone()).await;
+        let user = match user_result {
+            Ok(user) => user.user_identifier,
+            Err(error) => match error {
+                ReminderError::UserNotFound { .. } => {
+                    let user = self.user_repo.create(who).await?;
+
+                    user.user_identifier
+                }
+                _ => return Err(error),
+            },
+        };
+
         let created_result = self
             .task_repo
-            .create(Id::new(), title, remind_at, who)
+            .create(Id::new(), title, remind_at, user)
             .await;
 
         if let Ok(task) = created_result {

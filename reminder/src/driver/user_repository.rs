@@ -84,8 +84,8 @@ impl TryInto<UserIdentifier> for surrealdb::sql::Id {
             let maybe_identifier = map.0.get("identifier");
             match (maybe_client, maybe_identifier) {
                 (Some(client), Some(identifier)) => Ok(UserIdentifier {
-                    client: client.to_string(),
-                    identifier: identifier.to_string(),
+                    client: client.to_string().replace("'", ""),
+                    identifier: identifier.to_string().replace("'", ""),
                 }),
                 _ => Err(ReminderError::UserIdToUserIdentifierFailed {
                     cause: "Client or identifier is not found.".to_string(),
