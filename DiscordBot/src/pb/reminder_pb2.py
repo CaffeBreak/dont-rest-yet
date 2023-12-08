@@ -12,30 +12,55 @@ _sym_db = _symbol_database.Default()
 
 
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
-from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ereminder.proto\x12\x0c\x64ry.reminder\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\\\n\x04Task\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12,\n\x08remindAt\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0b\n\x03who\x18\x04 \x01(\t\"*\n\x05Tasks\x12!\n\x05tasks\x18\x01 \x03(\x0b\x32\x12.dry.reminder.Task\"]\n\x11\x43reateTaskRequest\x12\r\n\x05title\x18\x01 \x01(\t\x12,\n\x08remindAt\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0b\n\x03who\x18\x03 \x01(\t\"+\n\x0fListTaskRequest\x12\x10\n\x03who\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x06\n\x04_who\"\x1f\n\x11\x44\x65leteTaskRequest\x12\n\n\x02id\x18\x01 \x01(\t\"}\n\x11UpdateTaskRequest\x12\n\n\x02id\x18\x01 \x01(\t\x12\x12\n\x05title\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\x31\n\x08remindAt\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.TimestampH\x01\x88\x01\x01\x42\x08\n\x06_titleB\x0b\n\t_remindAt2\x9e\x02\n\x0bTaskService\x12\x43\n\nCreateTask\x12\x1f.dry.reminder.CreateTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x12@\n\x08ListTask\x12\x1d.dry.reminder.ListTaskRequest\x1a\x13.dry.reminder.Tasks\"\x00\x12\x43\n\nDeleteTask\x12\x1f.dry.reminder.DeleteTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x12\x43\n\nUpdateTask\x12\x1f.dry.reminder.UpdateTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x32Y\n\x13NotificationService\x12\x42\n\x10PushNotification\x12\x16.google.protobuf.Empty\x1a\x12.dry.reminder.Task\"\x00\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ereminder.proto\x12\x0c\x64ry.reminder\x1a\x1fgoogle/protobuf/timestamp.proto\"z\n\x04Task\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12,\n\x08remindAt\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12)\n\x03who\x18\x04 \x01(\x0b\x32\x1c.dry.reminder.UserIdentifier\"*\n\x05Tasks\x12!\n\x05tasks\x18\x01 \x03(\x0b\x32\x12.dry.reminder.Task\"{\n\x11\x43reateTaskRequest\x12\r\n\x05title\x18\x01 \x01(\t\x12,\n\x08remindAt\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12)\n\x03who\x18\x03 \x01(\x0b\x32\x1c.dry.reminder.UserIdentifier\"I\n\x0fListTaskRequest\x12.\n\x03who\x18\x01 \x01(\x0b\x32\x1c.dry.reminder.UserIdentifierH\x00\x88\x01\x01\x42\x06\n\x04_who\"\x1c\n\x0eGetTaskRequest\x12\n\n\x02id\x18\x01 \x01(\t\"\x1f\n\x11\x44\x65leteTaskRequest\x12\n\n\x02id\x18\x01 \x01(\t\"}\n\x11UpdateTaskRequest\x12\n\n\x02id\x18\x01 \x01(\t\x12\x12\n\x05title\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\x31\n\x08remindAt\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.TimestampH\x01\x88\x01\x01\x42\x08\n\x06_titleB\x0b\n\t_remindAt\")\n\x17PushNotificationRequest\x12\x0e\n\x06\x63lient\x18\x01 \x01(\t\"A\n\x04User\x12(\n\x02id\x18\x01 \x01(\x0b\x32\x1c.dry.reminder.UserIdentifier\x12\x0f\n\x07groupId\x18\x02 \x03(\t\"4\n\x0eUserIdentifier\x12\x0e\n\x06\x63lient\x18\x01 \x01(\t\x12\x12\n\nidentifier\x18\x02 \x01(\t\"*\n\x05Users\x12!\n\x05users\x18\x01 \x03(\x0b\x32\x12.dry.reminder.User\"\x11\n\x0fListUserRequest\"\x1f\n\x11\x44\x65leteUserRequest\x12\n\n\x02id\x18\x01 \x01(\t\"D\n\x05Group\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12!\n\x05users\x18\x03 \x03(\x0b\x32\x12.dry.reminder.User\"\"\n\x12\x43reateGroupRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x1d\n\x0fGetGroupRequest\x12\n\n\x02id\x18\x01 \x01(\t\"V\n\x15JoinLeaveGroupRequest\x12\x0f\n\x07groupId\x18\x01 \x01(\t\x12,\n\x06userId\x18\x02 \x01(\x0b\x32\x1c.dry.reminder.UserIdentifier2\xdd\x02\n\x0bTaskService\x12\x43\n\nCreateTask\x12\x1f.dry.reminder.CreateTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x12@\n\x08ListTask\x12\x1d.dry.reminder.ListTaskRequest\x1a\x13.dry.reminder.Tasks\"\x00\x12=\n\x07GetTask\x12\x1c.dry.reminder.GetTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x12\x43\n\nDeleteTask\x12\x1f.dry.reminder.DeleteTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x12\x43\n\nUpdateTask\x12\x1f.dry.reminder.UpdateTaskRequest\x1a\x12.dry.reminder.Task\"\x00\x32h\n\x13NotificationService\x12Q\n\x10PushNotification\x12%.dry.reminder.PushNotificationRequest\x1a\x12.dry.reminder.Task\"\x00\x30\x01\x32\xd6\x01\n\x0bUserService\x12@\n\nCreateUser\x12\x1c.dry.reminder.UserIdentifier\x1a\x12.dry.reminder.User\"\x00\x12@\n\x08ListUser\x12\x1d.dry.reminder.ListUserRequest\x1a\x13.dry.reminder.Users\"\x00\x12\x43\n\nDeleteUser\x12\x1f.dry.reminder.DeleteUserRequest\x1a\x12.dry.reminder.User\"\x00\x32\xab\x02\n\x0cGroupService\x12\x46\n\x0b\x43reateGroup\x12 .dry.reminder.CreateGroupRequest\x1a\x13.dry.reminder.Group\"\x00\x12@\n\x08GetGroup\x12\x1d.dry.reminder.GetGroupRequest\x1a\x13.dry.reminder.Group\"\x00\x12G\n\tJoinGroup\x12#.dry.reminder.JoinLeaveGroupRequest\x1a\x13.dry.reminder.Group\"\x00\x12H\n\nLeaveGroup\x12#.dry.reminder.JoinLeaveGroupRequest\x1a\x13.dry.reminder.Group\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'reminder_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
-  _globals['_TASK']._serialized_start=94
-  _globals['_TASK']._serialized_end=186
-  _globals['_TASKS']._serialized_start=188
-  _globals['_TASKS']._serialized_end=230
-  _globals['_CREATETASKREQUEST']._serialized_start=232
-  _globals['_CREATETASKREQUEST']._serialized_end=325
-  _globals['_LISTTASKREQUEST']._serialized_start=327
-  _globals['_LISTTASKREQUEST']._serialized_end=370
-  _globals['_DELETETASKREQUEST']._serialized_start=372
-  _globals['_DELETETASKREQUEST']._serialized_end=403
-  _globals['_UPDATETASKREQUEST']._serialized_start=405
-  _globals['_UPDATETASKREQUEST']._serialized_end=530
-  _globals['_TASKSERVICE']._serialized_start=533
-  _globals['_TASKSERVICE']._serialized_end=819
-  _globals['_NOTIFICATIONSERVICE']._serialized_start=821
-  _globals['_NOTIFICATIONSERVICE']._serialized_end=910
+  _globals['_TASK']._serialized_start=65
+  _globals['_TASK']._serialized_end=187
+  _globals['_TASKS']._serialized_start=189
+  _globals['_TASKS']._serialized_end=231
+  _globals['_CREATETASKREQUEST']._serialized_start=233
+  _globals['_CREATETASKREQUEST']._serialized_end=356
+  _globals['_LISTTASKREQUEST']._serialized_start=358
+  _globals['_LISTTASKREQUEST']._serialized_end=431
+  _globals['_GETTASKREQUEST']._serialized_start=433
+  _globals['_GETTASKREQUEST']._serialized_end=461
+  _globals['_DELETETASKREQUEST']._serialized_start=463
+  _globals['_DELETETASKREQUEST']._serialized_end=494
+  _globals['_UPDATETASKREQUEST']._serialized_start=496
+  _globals['_UPDATETASKREQUEST']._serialized_end=621
+  _globals['_PUSHNOTIFICATIONREQUEST']._serialized_start=623
+  _globals['_PUSHNOTIFICATIONREQUEST']._serialized_end=664
+  _globals['_USER']._serialized_start=666
+  _globals['_USER']._serialized_end=731
+  _globals['_USERIDENTIFIER']._serialized_start=733
+  _globals['_USERIDENTIFIER']._serialized_end=785
+  _globals['_USERS']._serialized_start=787
+  _globals['_USERS']._serialized_end=829
+  _globals['_LISTUSERREQUEST']._serialized_start=831
+  _globals['_LISTUSERREQUEST']._serialized_end=848
+  _globals['_DELETEUSERREQUEST']._serialized_start=850
+  _globals['_DELETEUSERREQUEST']._serialized_end=881
+  _globals['_GROUP']._serialized_start=883
+  _globals['_GROUP']._serialized_end=951
+  _globals['_CREATEGROUPREQUEST']._serialized_start=953
+  _globals['_CREATEGROUPREQUEST']._serialized_end=987
+  _globals['_GETGROUPREQUEST']._serialized_start=989
+  _globals['_GETGROUPREQUEST']._serialized_end=1018
+  _globals['_JOINLEAVEGROUPREQUEST']._serialized_start=1020
+  _globals['_JOINLEAVEGROUPREQUEST']._serialized_end=1106
+  _globals['_TASKSERVICE']._serialized_start=1109
+  _globals['_TASKSERVICE']._serialized_end=1458
+  _globals['_NOTIFICATIONSERVICE']._serialized_start=1460
+  _globals['_NOTIFICATIONSERVICE']._serialized_end=1564
+  _globals['_USERSERVICE']._serialized_start=1567
+  _globals['_USERSERVICE']._serialized_end=1781
+  _globals['_GROUPSERVICE']._serialized_start=1784
+  _globals['_GROUPSERVICE']._serialized_end=2083
 # @@protoc_insertion_point(module_scope)

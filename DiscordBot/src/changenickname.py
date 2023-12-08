@@ -2,10 +2,10 @@ import discord
 from discord import Intents, Client
 import os
 from const import JST
-import asyncio
 from dotenv import load_dotenv
 import json
 from datetime import datetime
+from discord.ext import tasks
 
 dotenv_path = '../.env'
 load_dotenv(verbose=True, dotenv_path=dotenv_path)
@@ -19,16 +19,15 @@ class MyClient(Client):
   def __init__(self, intents: Intents) -> None:
     super().__init__(intents=intents)
   async def on_ready(self):
-    loop = asyncio.get_event_loop()
-    loop.create_task(change_nickname())
-    print("起動完了")
+    change_nickname.start()
+    print("起動完了")   
   async def on_close(self) -> None:
     print("終了します")
 
 intents = Intents.default()
 client = MyClient(intents=intents)
 
-
+@tasks.loop(minutes=30)
 async def change_nickname():
     print("ユーザー名変更開始")
     if not GUILD_ID:
@@ -48,6 +47,8 @@ async def change_nickname():
         new_nickname = "夕食勇気"
     else:
         new_nickname = "夜食勇気"
+        
+    print(f"現在の時間は{current_time}")
     
     print(f"現在{old_nickname}です")
         
@@ -71,13 +72,14 @@ async def change_nickname():
     
     try:
       await member.edit(nick=new_nickname)
-      print(f"{member.display_name}にサーバー{guild.name}で変更しました")
+      print(f"{new_nickname}にサーバー{guild.name}で変更しました")
       with open("nikiname.json", "w") as file:
         json.dump({"old_nickname": new_nickname}, file)
     except discord.Forbidden:
         print(f"Bot does not have permission to change nickname for {member.display_name} in {guild.name}")
     except Exception as e:
         print(f"An error occurred while changing nickname for {member.display_name} in {guild.name}: {e}")
+
 
 if token:
     client.run(token=token)

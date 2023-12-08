@@ -1,12 +1,15 @@
 from cProfile import label
 import enum
+import discord
 from multiprocessing import BufferTooShort
 from turtle import title, update
 from typing import Any, Callable, Coroutine, Optional, Union
 from discord import ButtonStyle, Color, Embed, Interaction, SelectOption
-import discord
+import asyncio
 from discord.ui import View, button, Button, select, Select
 from const import JST
+from datetime import datetime, timedelta
+from pb.dry .reminder import Task
 
 from pb.dry.reminder import Task,UpdateTaskRequest
 
@@ -103,32 +106,51 @@ class DeletePaginationView[T](PaginationView[T]):
     deleted = await self.delete_task(self.target)
     
     await interaction.response.edit_message(content=f"{deleted.title} - {deleted.remind_at.astimezone(JST)}を削除しちゃった", embed=None, view=None)
+ 
+class updattask[T](View):
+  def __init__(
+    self,
+    ID: str
+    ):
+    super().__init__()
+    
+    self.pressed_day.custom_id = str(f"day-{ID}")
+    self.pressed_halfday.custom_id = str(f"halfday-{ID}")
+    self.pressed_minutes.custom_id = str(f"minutes-{ID}")
+    
+    
+    
+  @button(label="１日後", custom_id="day")
+  async def pressed_day(self, interaction: Interaction, _: Button):
+    pass
+    
+  @button(label="半日", custom_id="halfday")
+  async def pressed_halfday(self, interaction: Interaction, _: Button):
+    pass
+
+  @button(label="10分後", custom_id="minute")
+  async def pressed_minutes(self, interaction: Interaction, _: Button):
+    pass
     
 class bottonView[T](View):
   def __init__(
     self,
-    update_task: Callable[[],Coroutine[Any, Any, Task]],
-    title: str,
+    ID: str,
     yes: str,
     no: str,
   ):
     super().__init__()
-    
-    self.title = title
-    self.update_task = update_task
+    print("ボタンを表示します")
     
     self.pressedY.label = yes
     self.pressedN.label = no
+    self.pressedY.custom_id = str(f"yes-{ID}")
+    self.pressedN.custom_id = str(f"no-{ID}")
     
-  @button(custom_id="yes")
+  @button()
   async def pressedY(self, interaction: Interaction, _: Button):
-    name = interaction.user.display_name
-    await interaction.response.edit_message(content=f"{name}は『{self.title}』を完了しました！", view=None)
-      
+    pass
+  
   @button(custom_id="no")
   async def pressedN(self, interaction: Interaction, _:Button):
-    updated = await self.update_task()
-    await interaction.response.edit_message(content=f"更新しました。{updated.remind_at.astimezone(JST).strftime('%Y-%m-%d %H:%M')}に再度通知します", view=None)
-  
-
-  
+    pass

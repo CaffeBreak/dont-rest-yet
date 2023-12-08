@@ -29,7 +29,7 @@ class Task(betterproto.Message):
     id: str = betterproto.string_field(1)
     title: str = betterproto.string_field(2)
     remind_at: datetime = betterproto.message_field(3)
-    who: str = betterproto.string_field(4)
+    who: "UserIdentifier" = betterproto.message_field(4)
 
 
 @dataclass(eq=False, repr=False)
@@ -41,12 +41,19 @@ class Tasks(betterproto.Message):
 class CreateTaskRequest(betterproto.Message):
     title: str = betterproto.string_field(1)
     remind_at: datetime = betterproto.message_field(2)
-    who: str = betterproto.string_field(3)
+    who: "UserIdentifier" = betterproto.message_field(3)
 
 
 @dataclass(eq=False, repr=False)
 class ListTaskRequest(betterproto.Message):
-    who: Optional[str] = betterproto.string_field(1, optional=True, group="_who")
+    who: Optional["UserIdentifier"] = betterproto.message_field(
+        1, optional=True, group="_who"
+    )
+
+
+@dataclass(eq=False, repr=False)
+class GetTaskRequest(betterproto.Message):
+    id: str = betterproto.string_field(1)
 
 
 @dataclass(eq=False, repr=False)
@@ -61,6 +68,61 @@ class UpdateTaskRequest(betterproto.Message):
     remind_at: Optional[datetime] = betterproto.message_field(
         3, optional=True, group="_remindAt"
     )
+
+
+@dataclass(eq=False, repr=False)
+class PushNotificationRequest(betterproto.Message):
+    client: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class User(betterproto.Message):
+    id: "UserIdentifier" = betterproto.message_field(1)
+    group_id: List[str] = betterproto.string_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class UserIdentifier(betterproto.Message):
+    client: str = betterproto.string_field(1)
+    identifier: str = betterproto.string_field(2)
+
+
+@dataclass(eq=False, repr=False)
+class Users(betterproto.Message):
+    users: List["User"] = betterproto.message_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class ListUserRequest(betterproto.Message):
+    pass
+
+
+@dataclass(eq=False, repr=False)
+class DeleteUserRequest(betterproto.Message):
+    id: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class Group(betterproto.Message):
+    id: str = betterproto.string_field(1)
+    name: str = betterproto.string_field(2)
+    users: List["User"] = betterproto.message_field(3)
+
+
+@dataclass(eq=False, repr=False)
+class CreateGroupRequest(betterproto.Message):
+    name: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class GetGroupRequest(betterproto.Message):
+    id: str = betterproto.string_field(1)
+
+
+@dataclass(eq=False, repr=False)
+class JoinLeaveGroupRequest(betterproto.Message):
+    group_id: str = betterproto.string_field(1)
+    user_id: "UserIdentifier" = betterproto.message_field(2)
 
 
 class TaskServiceStub(betterproto.ServiceStub):
@@ -93,6 +155,23 @@ class TaskServiceStub(betterproto.ServiceStub):
             "/dry.reminder.TaskService/ListTask",
             list_task_request,
             Tasks,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def get_task(
+        self,
+        get_task_request: "GetTaskRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "Task":
+        return await self._unary_unary(
+            "/dry.reminder.TaskService/GetTask",
+            get_task_request,
+            Task,
             timeout=timeout,
             deadline=deadline,
             metadata=metadata,
@@ -136,7 +215,7 @@ class TaskServiceStub(betterproto.ServiceStub):
 class NotificationServiceStub(betterproto.ServiceStub):
     async def push_notification(
         self,
-        betterproto_lib_google_protobuf_empty: "betterproto_lib_google_protobuf.Empty",
+        push_notification_request: "PushNotificationRequest",
         *,
         timeout: Optional[float] = None,
         deadline: Optional["Deadline"] = None,
@@ -144,7 +223,7 @@ class NotificationServiceStub(betterproto.ServiceStub):
     ) -> AsyncIterator["Task"]:
         async for response in self._unary_stream(
             "/dry.reminder.NotificationService/PushNotification",
-            betterproto_lib_google_protobuf_empty,
+            push_notification_request,
             Task,
             timeout=timeout,
             deadline=deadline,
@@ -153,11 +232,137 @@ class NotificationServiceStub(betterproto.ServiceStub):
             yield response
 
 
+class UserServiceStub(betterproto.ServiceStub):
+    async def create_user(
+        self,
+        user_identifier: "UserIdentifier",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "User":
+        return await self._unary_unary(
+            "/dry.reminder.UserService/CreateUser",
+            user_identifier,
+            User,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def list_user(
+        self,
+        list_user_request: "ListUserRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "Users":
+        return await self._unary_unary(
+            "/dry.reminder.UserService/ListUser",
+            list_user_request,
+            Users,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def delete_user(
+        self,
+        delete_user_request: "DeleteUserRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "User":
+        return await self._unary_unary(
+            "/dry.reminder.UserService/DeleteUser",
+            delete_user_request,
+            User,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+
+class GroupServiceStub(betterproto.ServiceStub):
+    async def create_group(
+        self,
+        create_group_request: "CreateGroupRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "Group":
+        return await self._unary_unary(
+            "/dry.reminder.GroupService/CreateGroup",
+            create_group_request,
+            Group,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def get_group(
+        self,
+        get_group_request: "GetGroupRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "Group":
+        return await self._unary_unary(
+            "/dry.reminder.GroupService/GetGroup",
+            get_group_request,
+            Group,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def join_group(
+        self,
+        join_leave_group_request: "JoinLeaveGroupRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "Group":
+        return await self._unary_unary(
+            "/dry.reminder.GroupService/JoinGroup",
+            join_leave_group_request,
+            Group,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+    async def leave_group(
+        self,
+        join_leave_group_request: "JoinLeaveGroupRequest",
+        *,
+        timeout: Optional[float] = None,
+        deadline: Optional["Deadline"] = None,
+        metadata: Optional["MetadataLike"] = None
+    ) -> "Group":
+        return await self._unary_unary(
+            "/dry.reminder.GroupService/LeaveGroup",
+            join_leave_group_request,
+            Group,
+            timeout=timeout,
+            deadline=deadline,
+            metadata=metadata,
+        )
+
+
 class TaskServiceBase(ServiceBase):
     async def create_task(self, create_task_request: "CreateTaskRequest") -> "Task":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
 
     async def list_task(self, list_task_request: "ListTaskRequest") -> "Tasks":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def get_task(self, get_task_request: "GetTaskRequest") -> "Task":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
 
     async def delete_task(self, delete_task_request: "DeleteTaskRequest") -> "Task":
@@ -178,6 +383,13 @@ class TaskServiceBase(ServiceBase):
     ) -> None:
         request = await stream.recv_message()
         response = await self.list_task(request)
+        await stream.send_message(response)
+
+    async def __rpc_get_task(
+        self, stream: "grpclib.server.Stream[GetTaskRequest, Task]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.get_task(request)
         await stream.send_message(response)
 
     async def __rpc_delete_task(
@@ -208,6 +420,12 @@ class TaskServiceBase(ServiceBase):
                 ListTaskRequest,
                 Tasks,
             ),
+            "/dry.reminder.TaskService/GetTask": grpclib.const.Handler(
+                self.__rpc_get_task,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                GetTaskRequest,
+                Task,
+            ),
             "/dry.reminder.TaskService/DeleteTask": grpclib.const.Handler(
                 self.__rpc_delete_task,
                 grpclib.const.Cardinality.UNARY_UNARY,
@@ -225,15 +443,13 @@ class TaskServiceBase(ServiceBase):
 
 class NotificationServiceBase(ServiceBase):
     async def push_notification(
-        self,
-        betterproto_lib_google_protobuf_empty: "betterproto_lib_google_protobuf.Empty",
+        self, push_notification_request: "PushNotificationRequest"
     ) -> AsyncIterator["Task"]:
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
         yield Task()
 
     async def __rpc_push_notification(
-        self,
-        stream: "grpclib.server.Stream[betterproto_lib_google_protobuf.Empty, Task]",
+        self, stream: "grpclib.server.Stream[PushNotificationRequest, Task]"
     ) -> None:
         request = await stream.recv_message()
         await self._call_rpc_handler_server_stream(
@@ -247,7 +463,135 @@ class NotificationServiceBase(ServiceBase):
             "/dry.reminder.NotificationService/PushNotification": grpclib.const.Handler(
                 self.__rpc_push_notification,
                 grpclib.const.Cardinality.UNARY_STREAM,
-                betterproto_lib_google_protobuf.Empty,
+                PushNotificationRequest,
                 Task,
+            ),
+        }
+
+
+class UserServiceBase(ServiceBase):
+    async def create_user(self, user_identifier: "UserIdentifier") -> "User":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def list_user(self, list_user_request: "ListUserRequest") -> "Users":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def delete_user(self, delete_user_request: "DeleteUserRequest") -> "User":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def __rpc_create_user(
+        self, stream: "grpclib.server.Stream[UserIdentifier, User]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.create_user(request)
+        await stream.send_message(response)
+
+    async def __rpc_list_user(
+        self, stream: "grpclib.server.Stream[ListUserRequest, Users]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.list_user(request)
+        await stream.send_message(response)
+
+    async def __rpc_delete_user(
+        self, stream: "grpclib.server.Stream[DeleteUserRequest, User]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.delete_user(request)
+        await stream.send_message(response)
+
+    def __mapping__(self) -> Dict[str, grpclib.const.Handler]:
+        return {
+            "/dry.reminder.UserService/CreateUser": grpclib.const.Handler(
+                self.__rpc_create_user,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                UserIdentifier,
+                User,
+            ),
+            "/dry.reminder.UserService/ListUser": grpclib.const.Handler(
+                self.__rpc_list_user,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                ListUserRequest,
+                Users,
+            ),
+            "/dry.reminder.UserService/DeleteUser": grpclib.const.Handler(
+                self.__rpc_delete_user,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                DeleteUserRequest,
+                User,
+            ),
+        }
+
+
+class GroupServiceBase(ServiceBase):
+    async def create_group(self, create_group_request: "CreateGroupRequest") -> "Group":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def get_group(self, get_group_request: "GetGroupRequest") -> "Group":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def join_group(
+        self, join_leave_group_request: "JoinLeaveGroupRequest"
+    ) -> "Group":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def leave_group(
+        self, join_leave_group_request: "JoinLeaveGroupRequest"
+    ) -> "Group":
+        raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
+
+    async def __rpc_create_group(
+        self, stream: "grpclib.server.Stream[CreateGroupRequest, Group]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.create_group(request)
+        await stream.send_message(response)
+
+    async def __rpc_get_group(
+        self, stream: "grpclib.server.Stream[GetGroupRequest, Group]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.get_group(request)
+        await stream.send_message(response)
+
+    async def __rpc_join_group(
+        self, stream: "grpclib.server.Stream[JoinLeaveGroupRequest, Group]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.join_group(request)
+        await stream.send_message(response)
+
+    async def __rpc_leave_group(
+        self, stream: "grpclib.server.Stream[JoinLeaveGroupRequest, Group]"
+    ) -> None:
+        request = await stream.recv_message()
+        response = await self.leave_group(request)
+        await stream.send_message(response)
+
+    def __mapping__(self) -> Dict[str, grpclib.const.Handler]:
+        return {
+            "/dry.reminder.GroupService/CreateGroup": grpclib.const.Handler(
+                self.__rpc_create_group,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                CreateGroupRequest,
+                Group,
+            ),
+            "/dry.reminder.GroupService/GetGroup": grpclib.const.Handler(
+                self.__rpc_get_group,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                GetGroupRequest,
+                Group,
+            ),
+            "/dry.reminder.GroupService/JoinGroup": grpclib.const.Handler(
+                self.__rpc_join_group,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                JoinLeaveGroupRequest,
+                Group,
+            ),
+            "/dry.reminder.GroupService/LeaveGroup": grpclib.const.Handler(
+                self.__rpc_leave_group,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                JoinLeaveGroupRequest,
+                Group,
             ),
         }

@@ -1,8 +1,11 @@
+from re import U
 from discord import Color, SelectOption, app_commands, Interaction, abc
 import calendar
+import discord
 from grpclib.client import Channel
-from const import JST
+from const import JST, Grpcclient
 from pb.dry import reminder
+from pb.dry.reminder import UserIdentifier
 from datetime import datetime, timezone
 from discord import Embed
 from typing import Any, Callable, Coroutine, Optional, Union
@@ -13,7 +16,6 @@ from view import DeletePaginationView, PaginationView
 class Remindcmd(app_commands.Group):
   def __init__(self, name: str):
     super().__init__(name = name)
-  
     
   @app_commands.command(name="add", description="リマインドを行います")
   async def add(self, interaction: Interaction, main: str, days: str, time: str):
@@ -28,6 +30,7 @@ class Remindcmd(app_commands.Group):
     time : str
         リマインドする時間(18:00)
     """
+    Uid = interaction.user.id
     await interaction.response.defer(ephemeral=True)
     try:
         month, day = map(int, days.split('/'))
@@ -60,7 +63,6 @@ class Remindcmd(app_commands.Group):
         await interaction.followup.send(content=f"分の値が範囲外です。0から59の間で入力してください")
         return
 
-
     now = datetime.now(timezone.utc)
     year = now.year
     print(f"比較する時間は{now}")
@@ -73,12 +75,14 @@ class Remindcmd(app_commands.Group):
       task_time = datetime(year, month, day, hour, minute, 0, tzinfo=JST)
     print(f"作成する時間は{task_time}")
 
-    Uid = interaction.user.id
     
     request = reminder.CreateTaskRequest(
       title=main,
       remind_at=task_time.astimezone(timezone.utc),
-      who=str(Uid)
+      who= UserIdentifier(
+        client= Grpcclient,
+        identifier= str(Uid)
+      )
     )
     channel = Channel(host= "reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
@@ -88,9 +92,12 @@ class Remindcmd(app_commands.Group):
     
   @app_commands.command(name="list", description="リマインドのリストを表示します")
   async def list(self, interaction: Interaction):
-    uid = interaction.user.id
+    Uid = interaction.user.id
     request = reminder.ListTaskRequest(
-      who=str(uid)
+      who= UserIdentifier(
+        client= Grpcclient,
+        identifier= str(Uid)
+      )
     )
     channel = Channel(host="reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
@@ -112,9 +119,12 @@ class Remindcmd(app_commands.Group):
 
   @app_commands.command(name="delete", description="リマインドの削除を行います")
   async def delete(self, interaction: Interaction):
-    uid = interaction.user.id
+    Uid = interaction.user.id
     request = reminder.ListTaskRequest(
-      who= str(uid)
+      who= UserIdentifier(
+        client= Grpcclient,
+        identifier= str(Uid)
+      )
     )
     channel = Channel(host="reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
@@ -144,6 +154,21 @@ class Remindcmd(app_commands.Group):
     await channel_id_new.send("リマインドの通知先を変更しました")
     with open("config.json", "w") as file:
       json.dump({"channel_id": channel_id_new.id}, file)
+      print(channel_id_new.id)
+      
+  @app_commands.command(name="test", description="てすと" )
+  async def test(self, interaction: Interaction):
+    await interaction.response.defer(ephemeral=True)
+    Uid = interaction.user.id
+    request = reminder.UserIdentifier(
+      client=Grpcclient,
+      identifier=str(Uid)
+    )
+    channel = Channel(host="reminder", port=58946)
+    service = reminder.UserServiceStub(channel)
+    response = await service.create_user(request)
+    await interaction.followup.send(f"{response.id}で{response.group_id}です")
+
   
 def gen_embed(tasks: list[reminder.Task], index: int, page_max: int, title: Optional[str], color: Optional[Union[int, Color]]) -> Embed:
     embed = Embed(title=f"{title} - Page[{index + 1}/{page_max + 1}]", color=color)

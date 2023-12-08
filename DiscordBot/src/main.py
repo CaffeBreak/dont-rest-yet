@@ -2,13 +2,15 @@ from operator import ne
 import signal
 import sys
 import discord
+from schedule import idle_seconds
 from remindcmd import Remindcmd
-from discord import Intents, Client, abc
+from discord import Emoji, Intents, Client, abc
 from pb.dry import reminder
+from pb.dry.reminder import UserIdentifier
 from grpclib.client import Channel
 from discord.app_commands import CommandTree
 import os
-from const import JST
+from const import JST,Grpcclient,Update_task,User_check,Get_task
 import random
 import asyncio
 from dotenv import load_dotenv
@@ -16,7 +18,7 @@ import json
 from google.protobuf.empty_pb2 import Empty
 from typing import Any, Callable,Coroutine
 from datetime import datetime, timedelta
-from view import bottonView
+from view import bottonView, updattask
 from ResponseSet import response_sets
 
 
@@ -49,8 +51,52 @@ class MyClient(Client):
     print("同期完了")
   async def on_close(self) -> None:
     print("終了します")
+  async def on_interaction(self, inter:discord.Interaction):
+    try:  
+      if hasattr(inter, "data"):
+        if inter.data['component_type']: # type: ignore
+            await on_button_click(inter)
+    except KeyError:
+        pass
 
+
+async def on_button_click(interaction:discord.Interaction):
+  custom_id = interaction.data.get("custom_id")  # type: ignore
+  if custom_id and '-' in custom_id:
+    handle_id, task_id = custom_id.split('-')
+  else:
+    return
+  await interaction.response.defer()
+  if hasattr(interaction, "data"):
+    if not interaction.message:
+      return 
+    message_id = interaction.message.id
+    name = interaction.user.display_name
+    response = await Get_task(task_id)
+    Uid = int(response.who.identifier.strip("'"))
+    if handle_id == "yes":
+      if await User_check(interaction,Uid):
+        return
+      await interaction.followup.edit_message(message_id=message_id,content=f"{name}は『{response.title}』を完了しました！<:igyou:1019981052565000252><:erai:1045259439785123911>", view=None) 
+    if handle_id == "no":
+      if await User_check(interaction,Uid):
+        return
+      view = updattask(response.id)
+      await interaction.followup.edit_message(message_id=message_id,content= f"<@{Uid}>いつ再リマインドしますか？",view=view)
     
+    if handle_id =="day":
+      if await User_check(interaction,Uid):
+        return
+      await Update_task(interaction,response,timedelta(days=1))
+    if handle_id =="halfday":
+      if await User_check(interaction,Uid):
+        return
+      await Update_task(interaction,response,timedelta(hours=12))
+    if handle_id =="minutes":
+      if await User_check(interaction,Uid):
+        return
+      await Update_task(interaction,response,timedelta(minutes=10))
+
 async def Notification(channel_id):
   channel = client.get_channel(channel_id)
   if not isinstance(channel, abc.Messageable):
@@ -64,17 +110,14 @@ async def Notification(channel_id):
   
   print("通知待機開始")
 
-  async for response in service1.push_notification(betterproto_lib_google_protobuf_empty=Empty()):
+  async for response in service1.push_notification(reminder.PushNotificationRequest(client=Grpcclient)):
     print("タスク受け取り中")
-    request = reminder.UpdateTaskRequest(
-    id= response.id,
-    title= response.title,
-    remind_at= response.remind_at + timedelta(days=1)
-    )
+    print(response.who.identifier)
+    Uid = int(response.who.identifier.strip("'"))
     selected = random.choice(response_sets)
-    update_task: Callable[[],Coroutine[Any, Any, reminder.Task]] = lambda : service2.update_task(request)
-    view = bottonView(update_task,response.title,selected.yes,selected.no)
-    await channel.send(content= f"<@{response.who}>{selected.message.format(title = response.title)}",view=view,)
+    message = selected.message.format(title = response.title)
+    view = bottonView(response.id,selected.yes,selected.no)
+    await channel.send(content= f"<@{Uid}>{message}",view=view)
 
   channels.close()
 
