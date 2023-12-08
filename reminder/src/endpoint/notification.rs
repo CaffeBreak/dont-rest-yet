@@ -7,7 +7,6 @@ use tonic::{Request, Response, Status};
 use crate::{
     driver::grpc_api::reminder::{
         notification_service_server::NotificationService, PushNotificationRequest, Task,
-        UserIdentifier,
     },
     init::NOTIFICATION_SERVICE,
     log,

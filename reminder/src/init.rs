@@ -19,10 +19,12 @@ use crate::{
 };
 
 pub(crate) static DB: Lazy<Surreal<Any>> = Lazy::new(|| Surreal::init());
-pub(crate) static TASK_SERVICE: Lazy<TaskService<TaskRepositorySurrealDriver>> =
-    Lazy::new(|| TaskService {
-        task_repo: TaskRepositorySurrealDriver,
-    });
+pub(crate) static TASK_SERVICE: Lazy<
+    TaskService<TaskRepositorySurrealDriver, UserRepositorySurrealDriver>,
+> = Lazy::new(|| TaskService {
+    task_repo: TaskRepositorySurrealDriver,
+    user_repo: UserRepositorySurrealDriver,
+});
 pub(crate) static USER_SERVICE: Lazy<UserService<UserRepositorySurrealDriver>> =
     Lazy::new(|| UserService {
         user_repo: UserRepositorySurrealDriver,
