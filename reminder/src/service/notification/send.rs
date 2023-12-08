@@ -11,7 +11,7 @@ use crate::{
 };
 
 impl<T: TaskRepository> NotificationService<T> {
-    pub(crate) fn send_notification(&self) -> impl Stream<Item = Task> + '_ {
+    pub(crate) fn send_notification(&self, client: String) -> impl Stream<Item = Task> + '_ {
         stream! {
             let mut interval = time::interval(Duration::from_secs(10));
 
@@ -19,7 +19,7 @@ impl<T: TaskRepository> NotificationService<T> {
                 let mut task_cache = self.task_cache.lock().await;
                 if task_cache.len() > 0 {
                     let mut delete_flags: Vec<bool> = vec![];
-                    for (i, task) in task_cache.iter().enumerate() {
+                    for (i, task) in task_cache.iter().filter(|cache| cache.who.client == client).enumerate() {
                         delete_flags.push((task.remind_at - Utc::now()).num_seconds() < 0);
                         if delete_flags[i] {
                             yield task.clone();

@@ -23,13 +23,15 @@ impl NotificationService for NotificationSrv {
 
     async fn push_notification(
         &self,
-        _: Request<PushNotificationRequest>,
+        request: Request<PushNotificationRequest>,
     ) -> Result<Response<Self::PushNotificationStream>, Status> {
+        let request = request.into_inner();
+
         log!("gRPC" -> format!("<<< Start push notification stream.").cyan());
 
         let (tx, rx) = mpsc::channel(256);
         let join_handle = tokio::spawn(async move {
-            let mut stream = Box::pin(NOTIFICATION_SERVICE.send_notification());
+            let mut stream = Box::pin(NOTIFICATION_SERVICE.send_notification(request.client));
 
             while let Some(task) = stream.next().await {
                 let task_debug: Task = task.clone().into();
