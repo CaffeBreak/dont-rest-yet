@@ -21,7 +21,7 @@ CLIENT_SECRETS_FILE = (
     "../credentials.json"
 )
 SCOPES = ["https://www.googleapis.com/auth/classroom.courses.readonly"]
-REDIRECT_URI = "http://izumo-desktop.taila089c.ts.net/callback"
+REDIRECT_URI = "https://izumo-desktop.taila089c.ts.net/callback"
 
 intents = discord.Intents.default()  # デフォルトのintentsを取得
 intents.message_content = True  # メッセージの内容を読み取るためのintentを有効にする

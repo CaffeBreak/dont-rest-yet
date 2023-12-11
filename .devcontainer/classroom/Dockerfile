@@ -22,5 +22,7 @@ RUN  apt-get update && \
   su ${USERNAME} -c 'echo export PATH="/home/${USERNAME}/.local/bin:$PATH" >> ~/.bashrc' && \
   su ${USERNAME} -c 'PATH="/home/${USERNAME}/.local/bin:$PATH" poetry config virtualenvs.in-project true'
 
+# RUN prisma generate --schema=/dry/postgresql/schema.prisma
+
 
 USER ${USERNAME}

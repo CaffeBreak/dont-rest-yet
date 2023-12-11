@@ -33,3 +33,12 @@ services:
       - ${GRPC_PORT:-58946}:${GRPC_PORT:-58946}
     init: true
     tty: true
+  postgresql:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../postgresql/data:/var/lib/postgresql/data
+      - ../postgresql/init:/docker-entrypoint-initdb.d
+    env_file:
+      - ../classroom/.env
