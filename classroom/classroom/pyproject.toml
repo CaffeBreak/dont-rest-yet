@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "classroom"
+version = "0.1.0"
+description = ""
+authors = ["yanbaru1331 <m19034@g.metro-cit.ac.jp>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
