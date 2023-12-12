@@ -1,6 +1,6 @@
 #![feature(stmt_expr_attributes)]
 
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use colored::Colorize;
 use driver::grpc_api::serve;
 use init::init_db;

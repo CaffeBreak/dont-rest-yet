@@ -5,7 +5,7 @@
   ],
   "service": "discord-bot",
   "workspaceFolder": "/dry",
-  "postAttachCommand": "cd DiscordBot && poetry install && echo \"source $(cd /dry/DiscordBot && poetry env info -p)/bin/activate\" >> ~/.bashrc",
+  "postAttachCommand": "cd DiscordBot && poetry install && . /dry/DiscordBot/.venv/bin/activate",
   "customizations": {
     "vscode": {
       "extensions": [

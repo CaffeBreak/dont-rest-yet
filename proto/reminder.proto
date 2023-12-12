@@ -3,23 +3,34 @@ syntax = "proto3";
 package dry.reminder;
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/empty.proto";
 
 service TaskService {
   rpc CreateTask (CreateTaskRequest) returns (Task) {}
   rpc ListTask (ListTaskRequest) returns (Tasks) {}
+  rpc GetTask (GetTaskRequest) returns (Task) {}
   rpc DeleteTask (DeleteTaskRequest) returns (Task) {}
   rpc UpdateTask (UpdateTaskRequest) returns (Task) {}
 }
 service NotificationService {
-  rpc PushNotification (google.protobuf.Empty) returns (stream Task) {}
+  rpc PushNotification (PushNotificationRequest) returns (stream Task) {}
+}
+service UserService {
+  rpc CreateUser (UserIdentifier) returns (User) {}
+  rpc ListUser (ListUserRequest) returns (Users) {}
+  rpc DeleteUser (DeleteUserRequest) returns (User) {}
+}
+service GroupService {
+  rpc CreateGroup (CreateGroupRequest) returns (Group) {}
+  rpc GetGroup (GetGroupRequest) returns (Group) {}
+  rpc JoinGroup (JoinLeaveGroupRequest) returns (Group) {}
+  rpc LeaveGroup (JoinLeaveGroupRequest) returns (Group) {}
 }
 
 message Task {
   string id = 1;
   string title = 2;
   google.protobuf.Timestamp remindAt = 3;
-  string who = 4;
+  UserIdentifier who = 4;
 }
 message Tasks {
   repeated Task tasks = 1;
@@ -28,10 +39,13 @@ message Tasks {
 message CreateTaskRequest {
   string title = 1;
   google.protobuf.Timestamp remindAt = 2;
-  string who = 3;
+  UserIdentifier who = 3;
 }
 message ListTaskRequest {
-  optional string who = 1;
+  optional UserIdentifier who = 1;
+}
+message GetTaskRequest {
+  string id = 1;
 }
 message DeleteTaskRequest {
   string id = 1;
@@ -40,4 +54,42 @@ message UpdateTaskRequest {
   string id = 1;
   optional string title = 2;
   optional google.protobuf.Timestamp remindAt = 3;
+}
+
+message PushNotificationRequest {
+  string client = 1;
+}
+
+message User {
+  UserIdentifier id = 1;
+  repeated string groupId = 2;
+}
+message UserIdentifier {
+  string client = 1;
+  string identifier = 2;
+}
+message Users {
+  repeated User users = 1;
+}
+message ListUserRequest {
+
+}
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message Group {
+  string id = 1;
+  string name = 2;
+  repeated User users = 3;
+}
+message CreateGroupRequest {
+  string name = 1;
+}
+message GetGroupRequest {
+  string id = 1;
+}
+message JoinLeaveGroupRequest {
+  string groupId = 1;
+  UserIdentifier userId = 2;
 }

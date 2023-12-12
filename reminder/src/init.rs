@@ -10,28 +10,67 @@ use tokio::time;
 use crate::{
     config::Config,
     domain::task::TaskRepository,
-    driver::task_repository::TaskRepositorySurrealDriver,
+    driver::{
+        task_repository::TaskRepositorySurrealDriver, user_repository::UserRepositorySurrealDriver,
+    },
     log,
     misc::error::ReminderError,
-    service::service::{NotificationService, TaskService},
+    service::service::{NotificationService, TaskService, UserService},
 };
+
+pub(crate) static DB: Lazy<Surreal<Any>> = Lazy::new(|| Surreal::init());
+pub(crate) static TASK_SERVICE: Lazy<
+    TaskService<TaskRepositorySurrealDriver, UserRepositorySurrealDriver>,
+> = Lazy::new(|| TaskService {
+    task_repo: TaskRepositorySurrealDriver,
+    user_repo: UserRepositorySurrealDriver,
+});
+pub(crate) static USER_SERVICE: Lazy<UserService<UserRepositorySurrealDriver>> =
+    Lazy::new(|| UserService {
+        user_repo: UserRepositorySurrealDriver,
+    });
+pub(crate) static NOTIFICATION_SERVICE: Lazy<NotificationService<TaskRepositorySurrealDriver>> =
+    Lazy::new(|| NotificationService::new(TaskRepositorySurrealDriver));
 
 pub(crate) static CONFIG: Lazy<Config> = Lazy::new(|| {
     let _ = dotenv();
-    let default = Config::default();
+    let default = Config::from_file().expect("Failed to load config.toml");
 
     Config {
         grpc_port: match env::var("GRPC_PORT") {
             Ok(port_str) => port_str
                 .parse()
+                .map(|value| {
+                    log!("INFO" -> format!("gRPC port is overridden by environment variable").yellow());
+                    value
+                })
                 .expect(format!("{} is invalid port number", port_str).as_str()),
             Err(_) => default.grpc_port,
         },
-        db_uri: env::var("DB_URI").unwrap_or(default.db_uri),
-        db_user: env::var("DB_USER").unwrap_or(default.db_user),
-        db_pass: env::var("DB_PASS").unwrap_or(default.db_pass),
+        db_uri: env::var("DB_URI")
+            .map(|value| {
+                log!("INFO" -> format!("DB URI is overridden by environment variable").yellow());
+                value
+            })
+            .unwrap_or(default.db_uri),
+        db_user: env::var("DB_USER")
+            .map(|value| {
+                log!("INFO" -> format!("DB User is overridden by environment variable").yellow());
+                value
+            })
+            .unwrap_or(default.db_user),
+        db_pass: env::var("DB_PASS")
+            .map(|value| {
+                log!("INFO" -> format!("DB password is overridden by environment variable").yellow());
+                value
+            })
+            .unwrap_or(default.db_pass),
         notification_cache_interval: match env::var("NOTIFICATION_CACHE_INVETVAL") {
-            Ok(interval_str) => interval_str.parse().expect(
+            Ok(interval_str) => interval_str.parse()
+            .map(|value| {
+                log!("INFO" -> format!("Notification cache interval is overridden by environment variable").yellow());
+                value
+            }).expect(
                 format!(
                     "{} is invalid value for notification cache interval",
                     interval_str
@@ -42,13 +81,6 @@ pub(crate) static CONFIG: Lazy<Config> = Lazy::new(|| {
         },
     }
 });
-pub(crate) static DB: Lazy<Surreal<Any>> = Lazy::new(|| Surreal::init());
-pub(crate) static TASK_SERVICE: Lazy<TaskService<TaskRepositorySurrealDriver>> =
-    Lazy::new(|| TaskService {
-        task_repo: TaskRepositorySurrealDriver,
-    });
-pub(crate) static NOTIFICATION_SERVICE: Lazy<NotificationService<TaskRepositorySurrealDriver>> =
-    Lazy::new(|| NotificationService::new(TaskRepositorySurrealDriver));
 
 pub(crate) async fn init_db() -> Result<()> {
     log!("DB" -> format!("Connect to {} ...", CONFIG.db_uri).magenta());
@@ -103,6 +135,7 @@ pub(crate) async fn init_notification_cache() -> Result<()> {
                     bail!("Notification cache failed.");
                 }
                 ReminderError::TaskNotFound { id: _ } => return Ok(()),
+                _ => unreachable!(),
             },
         };
         {

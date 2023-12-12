@@ -1,31 +1,17 @@
-from discord import app_commands, Interaction
+from re import U
+from discord import Color, SelectOption, app_commands, Interaction, abc
 import calendar
 import discord
-import asyncio
 from grpclib.client import Channel
+from const import JST, Grpcclient
 from pb.dry import reminder
-from discord.ui import Select, View
+from pb.dry.reminder import UserIdentifier
 from datetime import datetime, timezone
 from discord import Embed
-
-class SelectView(View):
-  @discord.ui.select(
-         cls=Select,
-         placeholder="リマインドを選択してください",
-         options=[],
-  )
-  async def selectMenu(self, interaction: Interaction, select: Select):
-    selected_value = ''.join(select.values)
-    request = reminder.DeleteTaskRequest(
-      id=str(selected_value)
-    )
-    print(select)
-    print(selected_value)
-    channel = Channel(host= "reminder", port=58946)
-    service = reminder.TaskServiceStub(channel)
-    response = await service.delete_task(request)
-    print(response)
-    await interaction.response.send_message(content=f"<@{interaction.user.id}>選択されたリマインド{response.title}を削除しました")
+from typing import Any, Callable, Coroutine, Optional, Union
+import json
+from view import DeletePaginationView, PaginationView
+    
 
 class Remindcmd(app_commands.Group):
   def __init__(self, name: str):
@@ -34,6 +20,7 @@ class Remindcmd(app_commands.Group):
   @app_commands.command(name="add", description="リマインドを行います")
   async def add(self, interaction: Interaction, main: str, days: str, time: str):
     """
+    
     main : str
         リマインドしたい内容 
         
@@ -43,116 +30,152 @@ class Remindcmd(app_commands.Group):
     time : str
         リマインドする時間(18:00)
     """
+    Uid = interaction.user.id
+    await interaction.response.defer(ephemeral=True)
     try:
         month, day = map(int, days.split('/'))
         hour, minute = map(int, time.split(':'))
     except ValueError:
         if '/' not in days:
-            await interaction.response.send_message(content=f"<@{interaction.user.id}>日付の形式が正しくありません。月/日の形式で入力してください")
+            await interaction.followup.send(content=f"日付の形式が正しくありません。月/日の形式で入力してください")
             return
         if ':' not in time:
-            await interaction.response.send_message(content=f"<@{interaction.user.id}>時間の形式が正しくありません。時間:分の形式で入力してください")
+            await interaction.followup.send(content=f"時間の形式が正しくありません。時間:分の形式で入力してください")
             return
         return
 
     if not (1 <= month <= 12):
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>月の値が範囲外です。1から12の間で入力してください")
+        await interaction.followup.send(content=f"月の値が範囲外です。1から12の間で入力してください")
         return
 
     # 月ごとの最大の日付を取得
     max_day_in_month = calendar.monthrange(year=datetime.now().year, month=month)[1]
     
     if not (1 <= day <= max_day_in_month):
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>日の値が範囲外です。{month}月は1日から{max_day_in_month}日の間で入力してください")
+        await interaction.followup.send(content=f"日の値が範囲外です。{month}月は1日から{max_day_in_month}日の間で入力してください")
         return
 
     if not (0 <= hour <= 23):
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>時間の値が範囲外です。0から23の間で入力してください")
+        await interaction.followup.send(content=f"時間の値が範囲外です。0から23の間で入力してください")
         return
 
     if not (0 <= minute <= 59):
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>分の値が範囲外です。0から59の間で入力してください")
+        await interaction.followup.send(content=f"分の値が範囲外です。0から59の間で入力してください")
         return
 
+    now = datetime.now(timezone.utc)
+    year = now.year
+    print(f"比較する時間は{now}")
+    # print(f"タスクを作成しようとしている日時は{year}-{month}-{day}-{hour}-{minute}")
+    task_time = datetime(year, month, day, hour, minute, 0, tzinfo=JST)
+    print(f"{task_time}")
+    if task_time < now:
+      print("作成するタスクを翌年にします")
+      year += 1  # 今の時刻より前ならば、翌年にする
+      task_time = datetime(year, month, day, hour, minute, 0, tzinfo=JST)
+    print(f"作成する時間は{task_time}")
 
-    year = datetime.now().year
-    Uid = interaction.user.id
-    print(Uid)
-    print(type(Uid))
     
     request = reminder.CreateTaskRequest(
       title=main,
-      remind_at=datetime(year, month, day, hour, minute, 0, tzinfo=timezone.utc),
-      who=str(Uid)
+      remind_at=task_time.astimezone(timezone.utc),
+      who= UserIdentifier(
+        client= Grpcclient,
+        identifier= str(Uid)
+      )
     )
     channel = Channel(host= "reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
     response = await service.create_task(request)
-    print(response)
-
-      
-    await interaction.response.send_message(content=f"<@{interaction.user.id}> {days}-{time}に{main}をリマインドします。 ")
+    print("タスク作成完了")
+    await interaction.followup.send(content=f" {response.remind_at.astimezone(JST)}に{response.title}をリマインドします。")#ephemeral=True→「これらはあなただけに表示されています」
     
   @app_commands.command(name="list", description="リマインドのリストを表示します")
   async def list(self, interaction: Interaction):
     Uid = interaction.user.id
     request = reminder.ListTaskRequest(
-      who= str(Uid)
+      who= UserIdentifier(
+        client= Grpcclient,
+        identifier= str(Uid)
+      )
     )
-    channel = Channel(host= "reminder", port=58946)
+    channel = Channel(host="reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
     response = await service.list_task(request)
-    
+
     tasks = response.tasks
     if not tasks:
-        await interaction.response.send_message("リマインドはありません。")
-        return
-    
-    embed = Embed(title="リマインドリスト", color=0x00ff00)
-    
-    for task in tasks:
-      embed.add_field(
-          name=f"{task.title}",
-          value=f"日時: {task.remind_at.strftime('%Y-%m-%d %H:%M')}",
-          inline=False
-      )
+      await interaction.response.send_message("リマインドはありません。",ephemeral=True)
+      return
+      
+    view: PaginationView[reminder.Task] = PaginationView(tasks, gen_embed, "リマインドリスト", 0x00ff00)
 
-    # メッセージにEmbedを追加して送信
-    await interaction.response.send_message(content=f"<@{interaction.user.id}>",embed=embed)
+    # メッセージに Embed を追加して送信
+    await interaction.response.send_message(content=f"", embed=view.get_init_embed(), view=view,ephemeral=True)
     
     
     print(response.tasks)
     
+
   @app_commands.command(name="delete", description="リマインドの削除を行います")
-  async def delete(self, interaction: Interaction,):
+  async def delete(self, interaction: Interaction):
     Uid = interaction.user.id
     request = reminder.ListTaskRequest(
-      who= str(Uid)
+      who= UserIdentifier(
+        client= Grpcclient,
+        identifier= str(Uid)
+      )
     )
-    channel = Channel(host= "reminder", port=58946)
+    channel = Channel(host="reminder", port=58946)
     service = reminder.TaskServiceStub(channel)
     response = await service.list_task(request)
-    
     tasks = response.tasks
-    if not tasks:
-        await interaction.response.send_message(content=f"<@{interaction.user.id}>リマインドはありません。")
-        return
-    options = []
-      
-        # タスクごとにdiscord.SelectOptionオブジェクトを生成し、optionsに追加
-    for task in tasks:
-      formatted_datetime = task.remind_at.strftime('%Y-%m-%d %H:%M')
-      label_with_datetime = f"{task.title} - {formatted_datetime}"
-      option = discord.SelectOption(label=label_with_datetime, value=task.id)
-      options.append(option)
-
-    view = SelectView()
-    # selectMenuのoptionsを更新
-    view.selectMenu.options = options
-    await interaction.response.send_message("どのリマインドを削除しますか？", view=view)
-    await asyncio.sleep(20)
-    await interaction.delete_original_response()
-
-
-
     
+    if not tasks:
+      await interaction.response.send_message(content=f"リマインドはありません。",ephemeral=True)
+      
+      return
+    
+    gen_options: Callable[[list[reminder.Task]], list[SelectOption]] = lambda tasks: [SelectOption(label=f"{i + 1}. {task.title}", value=task.id) for i, task in enumerate(tasks)]
+    delete_task: Callable[[str], Coroutine[Any, Any, reminder.Task]] = lambda id: service.delete_task(reminder.DeleteTaskRequest(id))
+
+    view = DeletePaginationView(tasks, gen_embed, gen_options, delete_task, "リマインドリスト", 0x00ff00)
+    # optionsを更新
+    view.delete_target.options = gen_options(tasks[0:10])
+    await interaction.response.send_message(content="削除する対象の番号を選んでください", view=view, embed=view.get_init_embed(),ephemeral=True)
+    
+  @app_commands.command(name="channelset", description="リマインドするチャンネルを設定します" )
+  async def channelset(self, interaction: Interaction):
+    channel_id_new = interaction.channel
+    print(channel_id_new)
+    if not isinstance(channel_id_new, abc.Messageable):
+      await interaction.response.send_message("通知の送信先がメッセージを送信可能なチャンネルではありません")
+      return
+    await channel_id_new.send("リマインドの通知先を変更しました")
+    with open("config.json", "w") as file:
+      json.dump({"channel_id": channel_id_new.id}, file)
+      print(channel_id_new.id)
+      
+  @app_commands.command(name="test", description="てすと" )
+  async def test(self, interaction: Interaction):
+    await interaction.response.defer(ephemeral=True)
+    Uid = interaction.user.id
+    request = reminder.UserIdentifier(
+      client=Grpcclient,
+      identifier=str(Uid)
+    )
+    channel = Channel(host="reminder", port=58946)
+    service = reminder.UserServiceStub(channel)
+    response = await service.create_user(request)
+    await interaction.followup.send(f"{response.id}で{response.group_id}です")
+
+  
+def gen_embed(tasks: list[reminder.Task], index: int, page_max: int, title: Optional[str], color: Optional[Union[int, Color]]) -> Embed:
+    embed = Embed(title=f"{title} - Page[{index + 1}/{page_max + 1}]", color=color)
+    embed.add_field(
+      name="",
+      value=f"\n".join([f"`{str(i + 1).rjust(2, " ")}. {task.title}` - {task.remind_at.astimezone(JST).strftime('%Y-%m-%d %H:%M')}" for i, task in enumerate(tasks)]),
+      inline=False
+    )
+    
+    return embed

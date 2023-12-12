@@ -5,7 +5,9 @@ use tokio_stream::{Stream, StreamExt};
 use tonic::{Request, Response, Status};
 
 use crate::{
-    driver::grpc_api::reminder::{notification_service_server::NotificationService, Task},
+    driver::grpc_api::reminder::{
+        notification_service_server::NotificationService, PushNotificationRequest, Task,
+    },
     init::NOTIFICATION_SERVICE,
     log,
     misc::stream::DropReceiver,
@@ -21,7 +23,7 @@ impl NotificationService for NotificationSrv {
 
     async fn push_notification(
         &self,
-        _: Request<()>,
+        _: Request<PushNotificationRequest>,
     ) -> Result<Response<Self::PushNotificationStream>, Status> {
         log!("gRPC" -> format!("<<< Start push notification stream.").cyan());
 

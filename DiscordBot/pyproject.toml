@@ -7,18 +7,19 @@ readme = "README.md"
 packages = [{ include = "src" }]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 discord = "^2.3.2"
 python-dotenv = "^1.0.0"
 grpcio = "^1.59.3"
 grpcio-tools = "^1.59.3"
-py-cord = "^2.4.1"
 protobuf = "^4.25.1"
 types-protobuf = "^4.24.0.4"
 discord-py = "^2.3.2"
 betterproto = { extras = [
   "compiler",
 ], version = "^2.0.0b6", allow-prereleases = true }
+pytz = "^2023.3.post1"
+schedule = "^1.2.1"
 
 
 [tool.poetry.group.dev.dependencies]
