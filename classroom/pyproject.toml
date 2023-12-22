@@ -14,6 +14,7 @@ google = "^3.0.0"
 google-auth-oauthlib = "^1.1.0"
 google-auth-stubs = "^0.2.0"
 prisma = "^0.11.0"
+cryptography = "^41.0.7"
 
 
 [tool.poetry.group.dev.dependencies]

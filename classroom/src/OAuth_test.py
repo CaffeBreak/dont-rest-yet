@@ -1,16 +1,18 @@
 import os
 import os.path
-import sys
 import uuid
 import threading
+from dotenv import load_dotenv
+from typing import Union
+
 import discord
 from aiohttp import web
 from discord.ext import commands
-from dotenv import load_dotenv
 from google_auth_oauthlib.flow import Flow
+from prisma import Prisma
 
-# pipでパスが通らなかったときの名残
-sys.path.append("./myenv/lib/site-packages")
+from encrypt import encrypt_token, decrypt_token
+from database_operation import save_auth_data, get_token_by_discord_id, delete_all_auth_data, delete_auth_data_by_discord_id
 
 dotenv_path = '../.env'
 load_dotenv(verbose=True, dotenv_path=dotenv_path)
@@ -22,6 +24,8 @@ CLIENT_SECRETS_FILE = (
 )
 SCOPES = ["https://www.googleapis.com/auth/classroom.courses.readonly"]
 REDIRECT_URI = "https://izumo-desktop.taila089c.ts.net/callback"
+
+KEY = os.getenv("KEY")
 
 intents = discord.Intents.default()  # デフォルトのintentsを取得
 intents.message_content = True  # メッセージの内容を読み取るためのintentを有効にする
@@ -61,6 +65,31 @@ async def start_auth(ctx: commands.Context):
   await user.send(f"Click on the link to authenticate: {auth_url}")
 
 
+@bot.command(name="auth_delete")
+async def delete_auth_data_by_discord_id_receve(ctx: commands.Context):
+  user = ctx.author
+  TorF_delete_auth_data_by_discord_id: bool = await delete_auth_data_by_discord_id(int(user.id))
+  if TorF_delete_auth_data_by_discord_id is True:
+    await user.send("削除に成功しました")
+  else:
+    await user.send("削除対象がありませんでした")
+# envから取ってきたkeyで暗号化
+
+
+@bot.command(name="all_auth_delete")
+async def delete_all_auth_data_command(ctx: commands.Context):
+  user = ctx.author
+
+  # 管理者権限の確認や、特定のユーザーのみが実行できるようにするなどのセキュリティチェックを追加することをお勧めします
+  # 例: if user.id == <管理者のユーザーID>:
+
+  success = await delete_all_auth_data()
+  if success:
+    await user.send("すべての認証データが削除されました")
+  else:
+    await user.send("認証データの削除に失敗しました")
+
+
 async def handle_callback(request):
   code = request.query.get("code")
   temp_code = request.query.get("state")  # 一時コードを取得
@@ -80,10 +109,31 @@ async def handle_callback(request):
   refresh_token = credentials.refresh_token
 
   print(refresh_token)
+
+  encrypted_token = encrypt_token(refresh_token)
+
+  TorF_save_auth_data = await save_auth_data(encrypted_token, user_id)
+
+  async with Prisma() as db:
+    auth_data_record = await db.auth_data.find_first(
+        where={
+            'discord_id': user_id,
+        },
+    )
+    # auth_data レコードが存在すればそのトークンを返す
+    if auth_data_record:
+      print(decrypt_token(auth_data_record.google_token))
+    else:
+      print("Token not found for the specified discord_id.")
+
+  print(refresh_token)
   print(user_id)
   print(token)
 
-  return web.Response(text="認証が成功しました。このウィンドウを閉じてください。")
+  if TorF_save_auth_data == True:
+    return web.Response(text="認証が成功しました。このウィンドウを閉じてください。")
+  else:
+    return web.Response(text="discord_idに紐づけられたトークンが既に登録されているか、登録に失敗しました。")
 
 
 def run_discord_bot():

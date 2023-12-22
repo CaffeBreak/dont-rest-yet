@@ -1,6 +1,7 @@
 {
   "python.analysis.extraPaths": [
-    "../classroom/src"
+    "../classroom/src",
+    "./classroom/src"
   ],
   "python.analysis.typeCheckingMode": "strict",
   "python.analysis.autoImportCompletions": true,
@@ -15,5 +16,6 @@
   "flake8.args": [
     "--ignore=E111,E114,E125,E704,E402,E501"
   ],
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "python.defaultInterpreterPath": ""
 }
