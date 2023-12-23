@@ -4,6 +4,7 @@ import uuid
 import threading
 from dotenv import load_dotenv
 from typing import Union
+import json
 
 import discord
 from aiohttp import web
@@ -12,7 +13,7 @@ from google_auth_oauthlib.flow import Flow
 from prisma import Prisma
 
 from encrypt import encrypt_token, decrypt_token
-from database_operation import save_auth_data, get_token_by_discord_id, delete_all_auth_data, delete_auth_data_by_discord_id
+from database_operation import save_auth_data, get_refresh_token_by_discord_id, delete_all_auth_data, delete_auth_data_by_discord_id
 
 dotenv_path = '../.env'
 load_dotenv(verbose=True, dotenv_path=dotenv_path)
@@ -47,21 +48,49 @@ auth_codes: dict[str, int] = {}
 
 @bot.command(name="auth")
 async def start_auth(ctx: commands.Context):
+  user = ctx.author
+  discord_id = user.id
+
+  # データベースからリフレッシュトークンを取得
+  refresh_token = await get_refresh_token_by_discord_id(discord_id)
+
+  if refresh_token:
+    try:
+      # リフレッシュトークンの有効性を確認
+      new_access_token = await validate_refresh_token(refresh_token)
+      await user.send("あなたはすでに認証されています。")
+    except ValueError:
+      # トークンの有効性確認に失敗した場合は認証プロセスを続行
+      await send_auth_link(user)
+  else:
+    # リフレッシュトークンがない場合は認証プロセスを続行
+    await send_auth_link(user)
+
+
+async def validate_refresh_token(refresh_token: str) -> str:
+  try:
+    # リフレッシュトークンで新しいアクセストークンを取得してみる
+    new_access_token = refresh_access_token(refresh_token)
+    return new_access_token
+  except Exception as e:
+    # 何らかの理由でトークンの取得に失敗した場合は例外を発生させる
+    raise ValueError("Invalid or expired refresh token")
+
+
+async def send_auth_link(user: discord.User):
   # 認証ファイルからURLのオブジェクト作成
   flow = Flow.from_client_secrets_file(
-
       CLIENT_SECRETS_FILE, scopes=SCOPES, redirect_uri=REDIRECT_URI
   )
 
   # uuidを一時コードとしてdiscord id と一緒に保存
   temp_code = str(uuid.uuid4())
-  auth_codes[temp_code] = str(ctx.author.id)
+  auth_codes[temp_code] = str(user.id)
 
   # stateパラメータを指定して認証URLを生成
   auth_url, _ = flow.authorization_url(prompt="consent", state=temp_code)
 
   # コマンドを送ってきたユーザーにURLをDMで送る
-  user = ctx.author
   await user.send(f"Click on the link to authenticate: {auth_url}")
 
 
@@ -88,6 +117,28 @@ async def delete_all_auth_data_command(ctx: commands.Context):
     await user.send("すべての認証データが削除されました")
   else:
     await user.send("認証データの削除に失敗しました")
+
+
+def refresh_access_token(refresh_token: str) -> str:
+  """
+  リフレッシュトークンを使用して新しいアクセストークンを取得する
+
+  :param refresh_token: リフレッシュトークン
+  :return: 新しいアクセストークン
+  """
+  request_url = 'https://accounts.google.com/o/oauth2/token'
+  payload = {
+      'client_id': CLIENT_ID,
+      'client_secret': CLIENT_SECRET,
+      'refresh_token': refresh_token,
+      'grant_type': 'refresh_token'
+  }
+
+  response = requests.post(request_url, data=payload)
+  if response.status_code == 200:
+    return response.json()['access_token']
+  else:
+    raise Exception("Failed to refresh token: " + response.text)
 
 
 async def handle_callback(request):

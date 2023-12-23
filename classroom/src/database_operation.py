@@ -76,12 +76,12 @@ async def save_auth_data(encrypted_token: str, discord_id: int) -> bool:
       return True
 
 
-async def get_token_by_discord_id(discord_id: int) -> Union[str, bool]:
+async def get_refresh_token_by_discord_id(discord_id: int) -> Union[str, bool]:
   async with Prisma() as db:
     # 指定された discord_id を持つ auth_data レコードを取得
     auth_data_record = await db.auth_data.find_first(
         where={
-            'discord_id': discord_id,
+            'discord_id': str(discord_id),
         },
     )
     # auth_data レコードが存在すればそのトークンを返す
