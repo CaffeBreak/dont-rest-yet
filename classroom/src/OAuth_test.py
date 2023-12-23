@@ -3,8 +3,8 @@ import os.path
 import uuid
 import threading
 from dotenv import load_dotenv
-from typing import Union
 import json
+import requests
 
 import discord
 from aiohttp import web
@@ -23,6 +23,11 @@ DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 CLIENT_SECRETS_FILE = (
     "../credentials.json"
 )
+
+with open(CLIENT_SECRETS_FILE, "r") as json_file:
+  client_info = json.load(json_file)
+
+
 SCOPES = ["https://www.googleapis.com/auth/classroom.courses.readonly"]
 REDIRECT_URI = "https://izumo-desktop.taila089c.ts.net/callback"
 
@@ -127,9 +132,13 @@ def refresh_access_token(refresh_token: str) -> str:
   :return: 新しいアクセストークン
   """
   request_url = 'https://accounts.google.com/o/oauth2/token'
+
+  client_id = client_info["web"]["client_id"]
+  client_secret = client_info["web"]["client_secret"]
+
   payload = {
-      'client_id': CLIENT_ID,
-      'client_secret': CLIENT_SECRET,
+      'client_id': client_id,
+      'client_secret': client_secret,
       'refresh_token': refresh_token,
       'grant_type': 'refresh_token'
   }
