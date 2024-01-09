@@ -18,7 +18,7 @@ services:
     env_file:
       - ../classroom/.env
     ports:
-      - "${OAUTH_PORT:-9080}:${OAUTH_PORT:-9080}"
+      - "${OAUTH_PORT:-8888}:${OAUTH_PORT:-8888}"
     init: true
     tty: true
   reminder:
